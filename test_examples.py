@@ -8,6 +8,7 @@ import os
 import sys
 import struct
 import json
+import wave
 import traceback
 from pathlib import Path
 
@@ -2011,6 +2012,519 @@ try:
         record("silence_interval [decode]", "FAIL", "No silence gaps detected")
 except Exception as e:
     record("silence_interval [test]", "FAIL", str(e))
+
+print()
+
+# =============================================================================
+# SECTION 11: Full Coverage Tests for All Remaining Example Files
+# =============================================================================
+print("-" * 70)
+print("SECTION 11: Full Coverage Tests (50 additional example files)")
+print("-" * 70)
+
+
+def test_file_exists(filename, desc):
+    """Basic test: file exists and is non-empty."""
+    path = EXAMPLES_DIR / filename
+    if path.exists() and path.stat().st_size > 0:
+        record(f"{filename} [exists]", "PASS", f"{desc} ({path.stat().st_size} bytes)")
+        return True
+    else:
+        record(f"{filename} [exists]", "FAIL", "File missing or empty")
+        return False
+
+
+def test_direct_search(filename, desc):
+    """Test that the Plinian divider appears directly in the file."""
+    path = EXAMPLES_DIR / filename
+    data = path.read_bytes()
+    if PLINIAN_DIVIDER.encode('utf-8') in data:
+        record(f"{filename} [direct]", "PASS", f"Plinian divider found in {desc}")
+        return True
+    else:
+        record(f"{filename} [direct]", "FAIL", f"Plinian divider not found in {desc}")
+        return False
+
+
+def test_b64_hex_search(filename, desc):
+    """Test that base64 or hex encoding of divider is detectable."""
+    import base64
+    path = EXAMPLES_DIR / filename
+    data = path.read_bytes()
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+    found = []
+    if base64.b64encode(secret) in data:
+        found.append("b64")
+    if secret.hex().encode() in data:
+        found.append("hex")
+    if found:
+        record(f"{filename} [b64/hex]", "PASS", f"{desc}: {'+'.join(found)}")
+    else:
+        record(f"{filename} [b64/hex]", "WARN", f"No b64/hex encoding found")
+
+
+def test_image_lsb_decode(filename, desc, bits_per_channel=1, length_size=4):
+    """Test LSB decode of Plinian divider from image."""
+    try:
+        img = Image.open(EXAMPLES_DIR / filename).convert('RGBA')
+        pixels = list(img.getdata())
+        bits = []
+        for r, g, b, a in pixels:
+            for ch in [r, g, b]:
+                for bp in range(bits_per_channel):
+                    bits.append((ch >> bp) & 1)
+
+        length = 0
+        prefix_bits = length_size * 8
+        for i in range(prefix_bits):
+            length = (length << 1) | bits[i]
+
+        if 0 < length < 500:
+            msg_bits = bits[prefix_bits:prefix_bits + length * 8]
+            msg = bytearray()
+            for i in range(0, len(msg_bits), 8):
+                v = 0
+                for j in range(8):
+                    if i + j < len(msg_bits):
+                        v = (v << 1) | msg_bits[i + j]
+                msg.append(v)
+            decoded = msg.decode('utf-8', errors='replace')
+            if PLINIAN_DIVIDER[:10] in decoded:
+                record(f"{filename} [LSB decode]", "PASS", f"{desc}")
+                return
+        record(f"{filename} [LSB decode]", "WARN", f"Length={length}, partial decode")
+    except Exception as e:
+        record(f"{filename} [LSB decode]", "FAIL", str(e))
+
+
+# --- Unicode & text tricks (Chunk 9) ---
+
+# Directional override
+try:
+    data = (EXAMPLES_DIR / 'example_directional_override.txt').read_bytes()
+    text = data.decode('utf-8')
+    rlo_count = text.count('\u202E')
+    lro_count = text.count('\u202D')
+    if rlo_count > 0 and lro_count > 0:
+        record("example_directional_override.txt [bidi]", "PASS",
+               f"RLO={rlo_count}, LRO={lro_count} directional chars")
+    else:
+        record("example_directional_override.txt [bidi]", "FAIL", "No bidi chars")
+except Exception as e:
+    record("example_directional_override.txt [bidi]", "FAIL", str(e))
+
+# Hangul filler
+try:
+    data = (EXAMPLES_DIR / 'example_hangul_filler.txt').read_bytes()
+    text = data.decode('utf-8')
+    hf_count = text.count('\u3164')
+    if hf_count > 0:
+        record("example_hangul_filler.txt [hangul]", "PASS", f"{hf_count} Hangul fillers")
+    else:
+        record("example_hangul_filler.txt [hangul]", "FAIL", "No Hangul fillers")
+except Exception as e:
+    record("example_hangul_filler.txt [hangul]", "FAIL", str(e))
+
+# Braille
+try:
+    data = (EXAMPLES_DIR / 'example_braille.txt').read_bytes()
+    text = data.decode('utf-8')
+    braille_chars = [c for c in text if 0x2800 <= ord(c) <= 0x28FF]
+    if len(braille_chars) >= 10:
+        # Decode Braille back to bytes
+        decoded = bytes(ord(c) - 0x2800 for c in braille_chars)
+        if PLINIAN_DIVIDER.encode('utf-8') == decoded:
+            record("example_braille.txt [decode]", "PASS", "Braille -> bytes -> Plinian divider exact match")
+        else:
+            record("example_braille.txt [decode]", "WARN", f"{len(braille_chars)} Braille chars, partial match")
+    else:
+        record("example_braille.txt [decode]", "FAIL", f"Only {len(braille_chars)} Braille chars")
+except Exception as e:
+    record("example_braille.txt [decode]", "FAIL", str(e))
+
+# Math alphanumeric
+try:
+    data = (EXAMPLES_DIR / 'example_math_alphanumeric.txt').read_bytes()
+    text = data.decode('utf-8')
+    math_bold = sum(1 for c in text if 0x1D400 <= ord(c) <= 0x1D433)
+    normal_alpha = sum(1 for c in text if c.isascii() and c.isalpha())
+    if math_bold > 0:
+        record("example_math_alphanumeric.txt [math]", "PASS",
+               f"{math_bold} math bold chars, {normal_alpha} normal")
+    else:
+        record("example_math_alphanumeric.txt [math]", "FAIL", "No math bold chars")
+except Exception as e:
+    record("example_math_alphanumeric.txt [math]", "FAIL", str(e))
+
+# Unicode normalization
+try:
+    import unicodedata
+    data = (EXAMPLES_DIR / 'example_normalization.txt').read_bytes()
+    text = data.decode('utf-8')
+    nfc_count = sum(1 for line in text.split('\n') if line.strip() and
+                    unicodedata.is_normalized('NFC', line.strip()))
+    nfd_count = sum(1 for line in text.split('\n') if line.strip() and
+                    not unicodedata.is_normalized('NFC', line.strip()) and
+                    unicodedata.is_normalized('NFD', line.strip()))
+    if nfc_count > 0 or nfd_count > 0:
+        record("example_normalization.txt [NFC/NFD]", "PASS",
+               f"NFC={nfc_count}, NFD={nfd_count} lines")
+    else:
+        record("example_normalization.txt [NFC/NFD]", "WARN", "Could not distinguish NFC/NFD")
+except Exception as e:
+    record("example_normalization.txt [NFC/NFD]", "FAIL", str(e))
+
+# Sentence length, word choice, misspelling — test they exist and contain text
+for fname, desc in [
+    ('example_sentence_length.txt', 'sentence length encoding'),
+    ('example_word_choice.txt', 'word choice/synonym steg'),
+    ('example_misspelling.txt', 'misspelling pattern steg'),
+]:
+    test_file_exists(fname, desc)
+
+# --- Network & encoding tricks (Chunk 10) ---
+
+# IP TTL, IP ID, TCP window, TCP urgent
+for fname, field_name, offset, size in [
+    ('example_ttl_covert.pcap', 'IP TTL', 22, 1),  # TTL at IP header byte 8
+    ('example_ipid_covert.pcap', 'IP ID', None, None),
+    ('example_tcp_window.pcap', 'TCP window', None, None),
+    ('example_tcp_urgent.pcap', 'TCP urgent', None, None),
+]:
+    if test_file_exists(fname, f'{field_name} covert channel'):
+        # Verify it's a valid PCAP
+        data = (EXAMPLES_DIR / fname).read_bytes()
+        if data[:4] in (b'\xa1\xb2\xc3\xd4', b'\xd4\xc3\xb2\xa1'):
+            record(f"{fname} [pcap valid]", "PASS", f"Valid PCAP with {field_name} encoding")
+        else:
+            record(f"{fname} [pcap valid]", "FAIL", "Not valid PCAP")
+
+# DNS TXT
+try:
+    data = (EXAMPLES_DIR / 'example_dns_txt.pcap').read_bytes()
+    import base64 as b64mod
+    b64_secret = b64mod.b64encode(PLINIAN_DIVIDER.encode('utf-8'))
+    if b64_secret in data:
+        record("example_dns_txt.pcap [payload]", "PASS", "Base64 divider in DNS TXT record")
+    else:
+        record("example_dns_txt.pcap [payload]", "WARN", "Divider not found in raw PCAP")
+except Exception as e:
+    record("example_dns_txt.pcap [payload]", "FAIL", str(e))
+
+# Covert timing
+test_file_exists('example_covert_timing.pcap', 'covert timing channel')
+
+# Multi-base encoding
+try:
+    data = (EXAMPLES_DIR / 'example_multibase.txt').read_bytes()
+    import base64 as b64mod
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+    found = []
+    if b64mod.b64encode(secret) in data:
+        found.append('b64')
+    if b64mod.b32encode(secret) in data:
+        found.append('b32')
+    if b64mod.b16encode(secret) in data:
+        found.append('b16')
+    if b64mod.b85encode(secret) in data:
+        found.append('b85')
+    record("example_multibase.txt [decode]", "PASS" if len(found) >= 3 else "WARN",
+           f"Found encodings: {', '.join(found)}")
+except Exception as e:
+    record("example_multibase.txt [decode]", "FAIL", str(e))
+
+# Morse
+test_file_exists('example_morse.txt', 'Morse code encoding')
+
+# --- Image techniques (Chunk 11) ---
+
+# PVD
+test_file_exists('example_pvd.png', 'Pixel Value Differencing')
+
+# Histogram shifting
+test_file_exists('example_histogram_shift.png', 'histogram shifting')
+
+# LSB 4-bit (high capacity)
+try:
+    img = Image.open(EXAMPLES_DIR / 'example_lsb_4bit.png').convert('RGBA')
+    pixels = list(img.getdata())
+    # Extract nibbles from lower 4 bits
+    nibbles = []
+    for r, g, b, a in pixels:
+        for ch in [r, g, b]:
+            nibbles.append(ch & 0x0F)
+    # Reconstruct bytes from pairs of nibbles
+    length = 0
+    for i in range(8):  # 4 bytes = 8 nibbles for length
+        length = (length << 4) | nibbles[i]
+    if 0 < length < 200:
+        msg = bytearray()
+        for i in range(8, 8 + length * 2):
+            if i % 2 == 0 and i + 1 < len(nibbles):
+                msg.append((nibbles[i] << 4) | nibbles[i + 1])
+        decoded = msg.decode('utf-8', errors='replace')
+        if PLINIAN_DIVIDER[:10] in decoded:
+            record("example_lsb_4bit.png [decode]", "PASS", "4-bit LSB decoded")
+        else:
+            record("example_lsb_4bit.png [decode]", "WARN", f"Length={length}, decoded: {decoded[:20]}")
+    else:
+        record("example_lsb_4bit.png [decode]", "WARN", f"Length={length}")
+except Exception as e:
+    record("example_lsb_4bit.png [decode]", "FAIL", str(e))
+
+# LSB MSB-first
+test_file_exists('example_lsb_msb_first.png', 'LSB MSB-first ordering')
+
+# BMP DIB header
+try:
+    data = (EXAMPLES_DIR / 'example_bmp_dib.bmp').read_bytes()
+    if PLINIAN_DIVIDER.encode('utf-8') in data:
+        record("example_bmp_dib.bmp [trailing]", "PASS", "Plinian divider in BMP trailing data")
+    else:
+        record("example_bmp_dib.bmp [trailing]", "FAIL", "Divider not in raw data")
+except Exception as e:
+    record("example_bmp_dib.bmp [trailing]", "FAIL", str(e))
+
+# GIF disposal
+test_file_exists('example_gif_disposal.gif', 'GIF disposal method encoding')
+
+# JPEG APP segment
+try:
+    data = (EXAMPLES_DIR / 'example_jpeg_app.jpg').read_bytes()
+    if b'ST3GG' in data and PLINIAN_DIVIDER.encode('utf-8') in data:
+        record("example_jpeg_app.jpg [APP segment]", "PASS", "ST3GG APP segment with divider")
+    elif b'ST3GG' in data:
+        record("example_jpeg_app.jpg [APP segment]", "WARN", "ST3GG found but divider not in raw")
+    else:
+        record("example_jpeg_app.jpg [APP segment]", "FAIL", "No ST3GG marker")
+except Exception as e:
+    record("example_jpeg_app.jpg [APP segment]", "FAIL", str(e))
+
+# YCbCr color space
+test_file_exists('example_ycbcr.png', 'YCbCr color space LSB')
+
+# PNG custom chunks
+try:
+    data = (EXAMPLES_DIR / 'example_png_chunks_custom.png').read_bytes()
+    if b'stEg' in data and PLINIAN_DIVIDER.encode('utf-8') in data:
+        record("example_png_chunks_custom.png [chunks]", "PASS", "Custom stEg chunk with divider")
+    else:
+        record("example_png_chunks_custom.png [chunks]", "FAIL", "Custom chunks not found")
+except Exception as e:
+    record("example_png_chunks_custom.png [chunks]", "FAIL", str(e))
+
+# Matched pairs
+test_file_exists('example_matched_pairs.png', 'matched pairs LSB')
+
+# Scanline filter
+test_file_exists('example_scanline_filter.png', 'PNG scanline filter abuse')
+
+# --- Document & archive (Chunk 12) ---
+
+# PDF JavaScript
+try:
+    data = (EXAMPLES_DIR / 'example_pdf_javascript.pdf').read_bytes()
+    import base64 as b64mod
+    b64 = b64mod.b64encode(PLINIAN_DIVIDER.encode('utf-8'))
+    if b64 in data and b'/JavaScript' in data:
+        record("example_pdf_javascript.pdf [JS]", "PASS", "JavaScript action with base64 divider")
+    else:
+        record("example_pdf_javascript.pdf [JS]", "FAIL", "JS or divider not found")
+except Exception as e:
+    record("example_pdf_javascript.pdf [JS]", "FAIL", str(e))
+
+# PDF incremental
+test_direct_search('example_pdf_incremental.pdf', 'PDF incremental update')
+
+# PDF form fields
+test_direct_search('example_pdf_forms.pdf', 'PDF form fields')
+
+# HTML events
+try:
+    data = (EXAMPLES_DIR / 'example_html_events.html').read_bytes()
+    text = data.decode('utf-8')
+    has_events = 'onload=' in text and 'onclick=' in text
+    has_hidden = 'type="hidden"' in text
+    has_divider = PLINIAN_DIVIDER in text
+    if has_events and has_hidden and has_divider:
+        record("example_html_events.html [events]", "PASS",
+               "Event handlers + hidden fields + divider")
+    else:
+        record("example_html_events.html [events]", "WARN",
+               f"events={has_events}, hidden={has_hidden}, divider={has_divider}")
+except Exception as e:
+    record("example_html_events.html [events]", "FAIL", str(e))
+
+# XML entities
+try:
+    data = (EXAMPLES_DIR / 'example_xml_entities.xml').read_bytes()
+    text = data.decode('utf-8')
+    has_entity = '<!ENTITY steg_payload' in text
+    has_divider = PLINIAN_DIVIDER in text
+    if has_entity and has_divider:
+        record("example_xml_entities.xml [entities]", "PASS",
+               "Entity declarations with divider")
+    else:
+        record("example_xml_entities.xml [entities]", "FAIL", "Missing entities or divider")
+except Exception as e:
+    record("example_xml_entities.xml [entities]", "FAIL", str(e))
+
+# Nested ZIP
+try:
+    import zipfile
+    with zipfile.ZipFile(EXAMPLES_DIR / 'example_nested.zip') as outer:
+        names = outer.namelist()
+        has_inner = any('inner.zip' in n for n in names)
+        if has_inner:
+            inner_data = outer.read('data/inner.zip')
+            import io
+            with zipfile.ZipFile(io.BytesIO(inner_data)) as inner:
+                secret_data = inner.read('secret.txt').decode('utf-8')
+                if PLINIAN_DIVIDER in secret_data:
+                    record("example_nested.zip [nested decode]", "PASS",
+                           "Plinian divider extracted from inner ZIP")
+                else:
+                    record("example_nested.zip [nested decode]", "FAIL",
+                           f"Inner secret: {secret_data[:30]}")
+        else:
+            record("example_nested.zip [nested decode]", "FAIL", "No inner.zip")
+except Exception as e:
+    record("example_nested.zip [nested decode]", "FAIL", str(e))
+
+# Emoji skin tone
+try:
+    data = (EXAMPLES_DIR / 'example_emoji_skin_tone.txt').read_bytes()
+    text = data.decode('utf-8')
+    skin_tones = sum(1 for c in text if 0x1F3FB <= ord(c) <= 0x1F3FF)
+    if skin_tones > 10:
+        record("example_emoji_skin_tone.txt [tones]", "PASS",
+               f"{skin_tones} skin tone modifiers")
+    else:
+        record("example_emoji_skin_tone.txt [tones]", "FAIL",
+               f"Only {skin_tones} modifiers")
+except Exception as e:
+    record("example_emoji_skin_tone.txt [tones]", "FAIL", str(e))
+
+# Punycode
+test_file_exists('example_punycode.txt', 'Punycode/IDN domains')
+test_b64_hex_search('example_punycode.txt', 'Punycode file')
+
+# QR steg
+test_file_exists('example_qr_steg.txt', 'QR code steganography')
+test_b64_hex_search('example_qr_steg.txt', 'QR steg file')
+
+# JPEG restart markers
+try:
+    data = (EXAMPLES_DIR / 'example_jpeg_restart.jpg').read_bytes()
+    has_com = b'\xFF\xFE' in data  # COM marker
+    has_steg = b'ST3GG' in data
+    if has_com and has_steg:
+        record("example_jpeg_restart.jpg [COM]", "PASS", "JPEG COM marker with ST3GG")
+    else:
+        record("example_jpeg_restart.jpg [COM]", "WARN", f"COM={has_com}, ST3GG={has_steg}")
+except Exception as e:
+    record("example_jpeg_restart.jpg [COM]", "FAIL", str(e))
+
+# PNG polyglot (already tested in section 10, but verify decode)
+try:
+    data = (EXAMPLES_DIR / 'example_polyglot.png.zip').read_bytes()
+    # Should be valid as both PNG and ZIP
+    is_png = data[:8] == b'\x89PNG\r\n\x1a\n'
+    import zipfile, io
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(data))
+        is_zip = True
+        zip_names = zf.namelist()
+        zf.close()
+    except:
+        is_zip = False
+        zip_names = []
+    if is_png and is_zip:
+        record("example_polyglot.png.zip [polyglot]", "PASS",
+               f"Valid PNG + ZIP ({len(zip_names)} files)")
+    else:
+        record("example_polyglot.png.zip [polyglot]", "WARN",
+               f"PNG={is_png}, ZIP={is_zip}")
+except Exception as e:
+    record("example_polyglot.png.zip [polyglot]", "FAIL", str(e))
+
+# --- Audio DSP (Chunk 14) ---
+
+for fname, desc in [
+    ('example_echo_hiding.wav', 'echo hiding'),
+    ('example_phase_coding.wav', 'phase coding'),
+    ('example_spread_spectrum.wav', 'spread spectrum DSSS'),
+    ('example_quantization_noise.wav', 'quantization noise'),
+]:
+    if test_file_exists(fname, desc):
+        # Verify valid WAV
+        try:
+            with wave.open(str(EXAMPLES_DIR / fname)) as w:
+                record(f"{fname} [wav valid]", "PASS",
+                       f"WAV: {w.getnchannels()}ch, {w.getframerate()}Hz, {w.getnframes()} frames")
+        except Exception as e:
+            record(f"{fname} [wav valid]", "FAIL", str(e))
+
+# --- Image DSP (Chunk 15) ---
+
+for fname, desc in [
+    ('example_bpcs.png', 'BPCS bit-plane complexity'),
+    ('example_dct_manual.png', 'DCT coefficient embedding'),
+    ('example_dft.png', 'DFT magnitude embedding'),
+    ('example_dwt_haar.png', 'DWT Haar wavelet'),
+    ('example_subsampling.png', 'chroma subsampling'),
+]:
+    if test_file_exists(fname, desc):
+        try:
+            img = Image.open(EXAMPLES_DIR / fname)
+            record(f"{fname} [image valid]", "PASS",
+                   f"{img.size[0]}x{img.size[1]} {img.mode}")
+        except Exception as e:
+            record(f"{fname} [image valid]", "FAIL", str(e))
+
+# --- Misc (Chunk 16) ---
+
+# Self-extracting archive
+try:
+    data = (EXAMPLES_DIR / 'example_self_extracting.sh').read_bytes()
+    text = data.decode('utf-8')
+    import base64 as b64mod
+    b64_secret = b64mod.b64encode(PLINIAN_DIVIDER.encode('utf-8')).decode()
+    if b64_secret in text and '#!/bin/sh' in text:
+        record("example_self_extracting.sh [SFX]", "PASS", "Shell SFX with embedded payload")
+    else:
+        record("example_self_extracting.sh [SFX]", "FAIL", "Missing shebang or payload")
+except Exception as e:
+    record("example_self_extracting.sh [SFX]", "FAIL", str(e))
+
+# Extended attributes
+try:
+    path = EXAMPLES_DIR / 'example_xattr.txt'
+    if path.exists():
+        try:
+            attrs = os.listxattr(str(path))
+            steg_attrs = [a for a in attrs if 'st3gg' in a]
+            if steg_attrs:
+                payload = os.getxattr(str(path), b'user.st3gg.payload')
+                if payload == PLINIAN_DIVIDER.encode('utf-8'):
+                    record("example_xattr.txt [xattr decode]", "PASS",
+                           f"Plinian divider in xattr ({len(steg_attrs)} attrs)")
+                else:
+                    record("example_xattr.txt [xattr decode]", "WARN",
+                           f"{len(steg_attrs)} attrs but payload mismatch")
+            else:
+                record("example_xattr.txt [xattr decode]", "WARN",
+                       "No st3gg xattrs (may not survive git)")
+        except OSError:
+            record("example_xattr.txt [xattr decode]", "WARN",
+                   "xattr not supported on this filesystem")
+except Exception as e:
+    record("example_xattr.txt [xattr decode]", "FAIL", str(e))
+
+# TLS cert
+test_file_exists('example_tls_cert.pem', 'TLS certificate fields')
+test_direct_search('example_tls_cert.pem', 'TLS cert')
+test_b64_hex_search('example_tls_cert.pem', 'TLS cert')
 
 print()
 

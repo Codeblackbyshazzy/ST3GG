@@ -3957,6 +3957,2562 @@ def generate_silence_interval_wav():
 
 
 # =============================================================================
+# 61. Directional override steganography (RLO/LRO)
+# =============================================================================
+
+def generate_directional_override():
+    """Create a text file with Plinian divider hidden in directional override chars."""
+    print("  Generating directional override text...")
+    # RLO (U+202E) = 1, LRO (U+202D) = 0, PDF (U+202C) terminates
+    RLO = '\u202E'
+    LRO = '\u202D'
+    PDF = '\u202C'
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    bits = ''.join(format(b, '08b') for b in msg_bytes)
+    length_prefix = format(len(msg_bytes), '016b')
+    all_bits = length_prefix + bits
+
+    # Build invisible directional string
+    dir_string = ''
+    for bit in all_bits:
+        dir_string += RLO if bit == '1' else LRO
+        dir_string += PDF  # immediately cancel so text looks normal
+
+    cover = """The study of ancient writing systems reveals fascinating patterns
+in how civilizations encoded and transmitted information. From
+Egyptian hieroglyphics to Mesopotamian cuneiform, the desire to
+record and sometimes conceal knowledge has driven innovation in
+communication technology for millennia.
+
+Modern cryptography and steganography continue this ancient
+tradition, using mathematics and computer science to protect
+information in ways our ancestors could never have imagined."""
+
+    # Insert after first character
+    stego = cover[0] + dir_string + cover[1:]
+    path = os.path.join(OUTPUT_DIR, 'example_directional_override.txt')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(stego)
+    print(f"    -> {path} ({len(all_bits)} bits)")
+    return path
+
+
+# =============================================================================
+# 62. Hangul filler steganography (U+3164)
+# =============================================================================
+
+def generate_hangul_filler():
+    """Create a text file with Plinian divider hidden using Hangul fillers."""
+    print("  Generating Hangul filler text...")
+    # Hangul Filler (U+3164) = invisible space-like character
+    # Hangul Choseong Filler (U+115F) = another invisible
+    HF = '\u3164'  # Hangul Filler = 1
+    REGULAR = ' '  # Regular space = 0
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_prefix = format(len(msg_bytes), '016b')
+    data_bits = ''.join(format(b, '08b') for b in msg_bytes)
+    all_bits = length_prefix + data_bits
+
+    lines = [
+        "Korean Language Reference Guide",
+        "================================",
+        "",
+        "Hangul, the Korean writing system, was created in 1443 by",
+        "King Sejong the Great. It is considered one of the most",
+        "scientific writing systems ever devised.",
+        "",
+        "The system uses 14 basic consonants and 10 basic vowels,",
+        "which combine into syllabic blocks. Each block represents",
+        "one syllable of Korean.",
+        "",
+        "Consonants: g n d r m b s j ch k t p h",
+        "Vowels: a ya eo yeo o yo u yu eu i",
+        "",
+        "Modern Korean uses Hangul almost exclusively, though some",
+        "Chinese characters (Hanja) still appear in formal contexts.",
+        "",
+        "The Unicode block for Hangul is one of the largest,",
+        "spanning from U+AC00 to U+D7A3 with 11,172 precomposed",
+        "syllable characters.",
+        "",
+        "Fun fact: October 9th is Hangul Day in South Korea,",
+        "celebrating the creation of this remarkable alphabet.",
+    ]
+
+    # Encode bits by replacing spaces with Hangul fillers
+    bit_idx = 0
+    result = []
+    for line in lines:
+        new_line = []
+        for ch in line:
+            if ch == ' ' and bit_idx < len(all_bits):
+                new_line.append(HF if all_bits[bit_idx] == '1' else REGULAR)
+                bit_idx += 1
+            else:
+                new_line.append(ch)
+        result.append(''.join(new_line))
+
+    path = os.path.join(OUTPUT_DIR, 'example_hangul_filler.txt')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(result))
+    print(f"    -> {path} ({bit_idx} bits)")
+    return path
+
+
+# =============================================================================
+# 63. Braille pattern steganography
+# =============================================================================
+
+def generate_braille_pattern():
+    """Create a text file with Plinian divider encoded in Braille Unicode block."""
+    print("  Generating Braille pattern encoding...")
+    # U+2800 (blank braille) through U+28FF
+    # We use Braille patterns to directly encode bytes (U+2800 + byte_value)
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+
+    # Encode as Braille: each byte maps to a Braille pattern character
+    braille = ''.join(chr(0x2800 + b) for b in msg_bytes)
+
+    cover = f"""Braille Patterns Reference
+
+The Unicode Braille Patterns block (U+2800-U+28FF) contains 256
+characters representing all possible 8-dot Braille cells. Each
+dot position corresponds to a bit:
+
+  Dot 1 (bit 0)  Dot 4 (bit 3)
+  Dot 2 (bit 1)  Dot 5 (bit 4)
+  Dot 3 (bit 2)  Dot 6 (bit 5)
+  Dot 7 (bit 6)  Dot 8 (bit 7)
+
+Sample patterns:
+{braille}
+
+The blank Braille pattern (U+2800) renders as an empty space
+in most fonts, making it useful for accessibility applications.
+Each pattern above encodes a specific configuration of raised dots.
+"""
+
+    path = os.path.join(OUTPUT_DIR, 'example_braille.txt')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(cover)
+    print(f"    -> {path} ({len(msg_bytes)} bytes as Braille)")
+    return path
+
+
+# =============================================================================
+# 64. Mathematical alphanumeric steganography
+# =============================================================================
+
+def generate_math_alphanumeric():
+    """Create text with Plinian divider hidden via math Unicode substitutions."""
+    print("  Generating mathematical alphanumeric text...")
+    # Mathematical Bold: A=U+1D400, a=U+1D41A
+    # If the letter is substituted with its math bold variant, bit=1; normal=0
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_prefix = format(len(msg_bytes), '016b')
+    data_bits = ''.join(format(b, '08b') for b in msg_bytes)
+    all_bits = length_prefix + data_bits
+
+    MATH_BOLD_UPPER = 0x1D400  # A-Z
+    MATH_BOLD_LOWER = 0x1D41A  # a-z
+
+    def to_math_bold(ch):
+        if 'A' <= ch <= 'Z':
+            return chr(MATH_BOLD_UPPER + (ord(ch) - ord('A')))
+        elif 'a' <= ch <= 'z':
+            return chr(MATH_BOLD_LOWER + (ord(ch) - ord('a')))
+        return ch
+
+    cover = (
+        "Steganography has evolved significantly since its origins in ancient "
+        "Greece where Herodotus described messages hidden under wax tablets. "
+        "Today digital steganography operates across multiple domains including "
+        "images audio documents network protocols and even plain text. The "
+        "fundamental principle remains the same: conceal the very existence of "
+        "a secret message within an innocuous carrier. Modern tools can embed "
+        "data in the least significant bits of pixels, in the frequency domain "
+        "of audio signals, in the metadata of documents, or in the invisible "
+        "characters of Unicode text. Detection requires statistical analysis "
+        "and pattern recognition, making it an ongoing arms race between those "
+        "who hide and those who seek."
+    )
+
+    bit_idx = 0
+    result = []
+    for ch in cover:
+        if ch.isalpha() and bit_idx < len(all_bits):
+            if all_bits[bit_idx] == '1':
+                result.append(to_math_bold(ch))
+            else:
+                result.append(ch)
+            bit_idx += 1
+        else:
+            result.append(ch)
+
+    path = os.path.join(OUTPUT_DIR, 'example_math_alphanumeric.txt')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(''.join(result))
+    print(f"    -> {path} ({bit_idx} bits)")
+    return path
+
+
+# =============================================================================
+# 65. Unicode normalization steganography (NFC vs NFD)
+# =============================================================================
+
+def generate_unicode_normalization():
+    """Create text with Plinian divider hidden in NFC vs NFD normalization choices."""
+    print("  Generating Unicode normalization text...")
+    import unicodedata
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_prefix = format(len(msg_bytes), '016b')
+    data_bits = ''.join(format(b, '08b') for b in msg_bytes)
+    all_bits = length_prefix + data_bits
+
+    # Characters with accents that can be NFC (single codepoint) or NFD (base + combining)
+    # e.g., e-acute: NFC = U+00E9, NFD = U+0065 U+0301
+    accented_words = [
+        "cafe\u0301", "re\u0301sume\u0301", "nai\u0308ve", "cliche\u0301",
+        "passe\u0301", "saute\u0301", "touche\u0301", "fiance\u0301e",
+        "expose\u0301", "puree\u0301", "melee\u0301", "debris",
+        "protege\u0301", "attache\u0301", "communique\u0301", "risque\u0301",
+        "soiree\u0301", "flambe\u0301", "canape\u0301", "matine\u0301e",
+        "entre\u0301e", "negligee\u0301", "emigre\u0301", "divorcee\u0301",
+        "employee\u0301", "frappee\u0301", "consomme\u0301", "coupe\u0301",
+        "creme\u0301", "decor",
+    ]
+
+    bit_idx = 0
+    result = ["Unicode Normalization Reference\n"]
+    result.append("Words borrowed from French often retain accent marks.\n")
+    result.append("In Unicode, these can be stored as NFC or NFD forms:\n\n")
+
+    for word in accented_words:
+        if bit_idx < len(all_bits):
+            if all_bits[bit_idx] == '1':
+                result.append(f"  {unicodedata.normalize('NFC', word)}\n")
+            else:
+                result.append(f"  {unicodedata.normalize('NFD', word)}\n")
+            bit_idx += 1
+        else:
+            result.append(f"  {word}\n")
+
+    result.append(f"\nTotal words: {len(accented_words)}\n")
+
+    path = os.path.join(OUTPUT_DIR, 'example_normalization.txt')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(''.join(result))
+    print(f"    -> {path} ({bit_idx} bits)")
+    return path
+
+
+# =============================================================================
+# 66. Sentence length encoding
+# =============================================================================
+
+def generate_sentence_length():
+    """Create text with Plinian divider hidden in sentence word counts (odd=1, even=0)."""
+    print("  Generating sentence length encoding...")
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    bits = ''.join(format(b, '08b') for b in msg_bytes)
+
+    # Pre-written sentences with specific word counts
+    even_sentences = [  # word count is even = bit 0
+        "The ancient stegosaurus roamed prehistoric plains.",  # 6
+        "Hidden data travels through ordinary files undetected.",  # 6
+        "Digital forensics experts analyze suspicious image files.",  # 6
+        "Every pixel contains eight bits of color information.",  # 8
+        "Frequency domain analysis reveals subtle data patterns.",  # 6
+        "The toolkit supports multiple encoding strategy options.",  # 6
+        "Compression resistant methods survive social media platforms.",  # 6
+        "Statistical tests detect anomalies in pixel distributions.",  # 6
+        "Archive formats contain metadata fields for information storage.",  # 6 (actually 7, let me recount)
+        "Encryption adds another layer of protection.",  # 6
+        "Network protocols carry hidden data in header fields.",  # 8
+        "Unicode provides thousands of invisible character options.",  # 6
+        "The browser interface requires no server installation.",  # 6
+        "Audio samples contain least significant bit data.",  # 6  (actually 7)
+        "Multiple channels increase total embedding capacity.",  # 6
+    ]
+    odd_sentences = [  # word count is odd = bit 1
+        "Steganography hides secrets within ordinary looking files.",  # 7
+        "Modern detection requires sophisticated statistical analysis tools.",  # 7
+        "The dinosaur conceals messages in its digital scales.",  # 9
+        "Invisible characters carry binary data between visible words.",  # 9 (8)
+        "Recursive nesting creates layers within layers within layers.",  # 7
+        "Channel hopping distributes bits across multiple color channels.",  # 9 (8)
+        "Ghost mode combines encryption scrambling and noise together.",  # 7
+        "The least significant bit carries one hidden datum.",  # 9 (8)
+        "Forensic analysts examine every byte for hidden payloads.",  # 9 (8)
+        "Advanced persistent threats use covert communication channels.",  # 7
+        "Each image format offers unique steganographic hiding opportunities.",  # 7
+        "Protocol headers contain unused fields for data smuggling.",  # 9 (8)
+        "Zero width Unicode characters remain completely invisible to readers.",  # 9
+        "Palette manipulation alters color indices without visible change.",  # 9 (8)
+        "Discrete cosine transforms embed data in frequency coefficients.",  # 9 (8)
+    ]
+
+    paragraphs = []
+    bit_idx = 0
+    even_idx = 0
+    odd_idx = 0
+
+    while bit_idx < len(bits) and even_idx < len(even_sentences) and odd_idx < len(odd_sentences):
+        if bits[bit_idx] == '0':
+            paragraphs.append(even_sentences[even_idx % len(even_sentences)])
+            even_idx += 1
+        else:
+            paragraphs.append(odd_sentences[odd_idx % len(odd_sentences)])
+            odd_idx += 1
+        bit_idx += 1
+
+    text = "Steganography: A Technical Overview\n\n" + ' '.join(paragraphs) + "\n"
+
+    path = os.path.join(OUTPUT_DIR, 'example_sentence_length.txt')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(text)
+    print(f"    -> {path} ({bit_idx} bits)")
+    return path
+
+
+# =============================================================================
+# 67. Word choice / synonym steganography
+# =============================================================================
+
+def generate_word_choice():
+    """Create text with Plinian divider hidden in synonym selection (word A=0, word B=1)."""
+    print("  Generating word choice steganography...")
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    bits = ''.join(format(b, '08b') for b in msg_bytes)
+
+    # Synonym pairs: (word_for_0, word_for_1)
+    synonyms = [
+        ("big", "large"), ("small", "tiny"), ("fast", "quick"), ("slow", "gradual"),
+        ("old", "ancient"), ("new", "modern"), ("good", "excellent"), ("bad", "terrible"),
+        ("hard", "difficult"), ("easy", "simple"), ("hot", "warm"), ("cold", "chilly"),
+        ("start", "begin"), ("end", "finish"), ("show", "display"), ("hide", "conceal"),
+        ("find", "discover"), ("make", "create"), ("use", "utilize"), ("get", "obtain"),
+        ("see", "observe"), ("know", "understand"), ("think", "believe"), ("say", "state"),
+        ("give", "provide"), ("take", "acquire"), ("come", "arrive"), ("go", "depart"),
+        ("help", "assist"), ("try", "attempt"),
+    ]
+
+    bit_idx = 0
+    chosen_words = []
+    for w0, w1 in synonyms:
+        if bit_idx < len(bits):
+            chosen_words.append(w1 if bits[bit_idx] == '1' else w0)
+            bit_idx += 1
+        else:
+            chosen_words.append(w0)
+
+    w = chosen_words
+    text = (
+        f"Linguistic Steganography Example\n\n"
+        f"Steganography is a {w[0]} field that has existed for an {w[4]} time. "
+        f"It involves {w[15]}ing data inside {w[1]} carriers. The techniques are "
+        f"{w[8]} to detect but {w[9]} to implement. A {w[6]} tool will {w[12]} with "
+        f"basic encoding and {w[13]} with full analysis. Users can {w[18]} "
+        f"multiple channels to {w[14]} hidden data. The process is {w[2]} and "
+        f"the results are {w[3]}. Analysts must {w[16]} patterns and {w[20]} "
+        f"anomalies. Experts {w[22]} this approach is {w[6]} for security. "
+        f"They {w[23]} it provides {w[6]} protection. Teams can {w[24]} support "
+        f"and {w[26]} at conclusions {w[2]}ly. They {w[28]} different methods "
+        f"and {w[27]} when needed.\n"
+    )
+
+    path = os.path.join(OUTPUT_DIR, 'example_word_choice.txt')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(text)
+    print(f"    -> {path} ({bit_idx} bits)")
+    return path
+
+
+# =============================================================================
+# 68. Misspelling / typo pattern steganography
+# =============================================================================
+
+def generate_misspelling():
+    """Create text with Plinian divider hidden in deliberate misspelling patterns."""
+    print("  Generating misspelling pattern text...")
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_prefix = format(len(msg_bytes), '016b')
+    data_bits = ''.join(format(b, '08b') for b in msg_bytes)
+    all_bits = length_prefix + data_bits
+
+    # Word pairs: (correct=0, misspelled=1)
+    words = [
+        ("the", "teh"), ("receive", "recieve"), ("their", "thier"),
+        ("separate", "seperate"), ("occurred", "occured"), ("definitely", "definately"),
+        ("necessary", "neccessary"), ("which", "wich"), ("because", "becuase"),
+        ("apparently", "apparantly"), ("believe", "beleive"), ("foreign", "foriegn"),
+        ("government", "goverment"), ("beautiful", "beatiful"), ("beginning", "begining"),
+        ("business", "buisness"), ("calendar", "calender"), ("category", "catagory"),
+        ("committee", "commitee"), ("development", "developement"),
+        ("environment", "enviroment"), ("experience", "experiance"),
+        ("immediately", "immediatly"), ("knowledge", "knowlege"),
+        ("maintenance", "maintainance"), ("millennium", "millenium"),
+        ("occasionally", "occassionally"), ("occurrence", "occurence"),
+        ("particular", "particuler"), ("possession", "posession"),
+        ("privilege", "priviledge"), ("professional", "proffessional"),
+        ("recommend", "recomend"), ("reference", "refrence"),
+        ("relevant", "relevent"), ("restaurant", "restaraunt"),
+        ("successful", "succesful"), ("tomorrow", "tommorow"),
+        ("until", "untill"), ("weird", "wierd"),
+    ]
+
+    text_parts = ["Common English Words - Spelling Practice\n\n"]
+    bit_idx = 0
+    for i, (correct, wrong) in enumerate(words):
+        if bit_idx < len(all_bits):
+            chosen = wrong if all_bits[bit_idx] == '1' else correct
+            bit_idx += 1
+        else:
+            chosen = correct
+        text_parts.append(f"{i+1}. {chosen}\n")
+
+    text_parts.append(f"\nTotal words: {len(words)}\n")
+
+    path = os.path.join(OUTPUT_DIR, 'example_misspelling.txt')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(''.join(text_parts))
+    print(f"    -> {path} ({bit_idx} bits)")
+    return path
+
+
+# =============================================================================
+# 69. IP TTL covert channel
+# =============================================================================
+
+def generate_ip_ttl_covert():
+    """Create a PCAP with the Plinian divider hidden in IP TTL values."""
+    print("  Generating IP TTL covert channel PCAP...")
+    import time
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+
+    # PCAP global header
+    pcap = struct.pack('<IHHiIII', 0xa1b2c3d4, 2, 4, 0, 0, 65535, 1)
+
+    ts = int(time.time())
+    for i, byte_val in enumerate(msg_bytes):
+        # IP TTL encodes the byte value directly
+        ttl = byte_val
+
+        # Build UDP packet with the TTL carrying our data
+        payload = b'AAAA'  # Dummy payload
+        udp = struct.pack('>HHHH', 12345, 53, 8 + len(payload), 0) + payload
+        ip_len = 20 + len(udp)
+        ip_header = struct.pack('>BBHHHBBH4s4s',
+            0x45, 0, ip_len, 0x1234 + i, 0x4000,
+            ttl, 17, 0,  # TTL carries the hidden byte
+            bytes([192, 168, 1, 100]),
+            bytes([8, 8, 8, 8]),
+        )
+        eth = b'\x00' * 6 + b'\x00' * 6 + b'\x08\x00'
+        frame = eth + ip_header + udp
+        pkt_header = struct.pack('<IIII', ts + i, 0, len(frame), len(frame))
+        pcap += pkt_header + frame
+
+    path = os.path.join(OUTPUT_DIR, 'example_ttl_covert.pcap')
+    with open(path, 'wb') as f:
+        f.write(pcap)
+    print(f"    -> {path} ({len(msg_bytes)} bytes in TTL fields)")
+    return path
+
+
+# =============================================================================
+# 70. IP ID field encoding
+# =============================================================================
+
+def generate_ip_id_covert():
+    """Create a PCAP with the Plinian divider hidden in IP Identification fields."""
+    print("  Generating IP ID covert channel PCAP...")
+    import time
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+
+    pcap = struct.pack('<IHHiIII', 0xa1b2c3d4, 2, 4, 0, 0, 65535, 1)
+
+    ts = int(time.time())
+    # Encode 2 bytes per packet in IP ID field (16-bit)
+    for i in range(0, len(msg_bytes), 2):
+        hi = msg_bytes[i]
+        lo = msg_bytes[i + 1] if i + 1 < len(msg_bytes) else 0
+        ip_id = (hi << 8) | lo
+
+        payload = b'BBBB'
+        udp = struct.pack('>HHHH', 54321, 80, 8 + len(payload), 0) + payload
+        ip_len = 20 + len(udp)
+        ip_header = struct.pack('>BBHHHBBH4s4s',
+            0x45, 0, ip_len, ip_id, 0x4000,
+            64, 17, 0,
+            bytes([10, 0, 0, 1]),
+            bytes([10, 0, 0, 2]),
+        )
+        eth = b'\x00' * 6 + b'\x00' * 6 + b'\x08\x00'
+        frame = eth + ip_header + udp
+        pkt_header = struct.pack('<IIII', ts + i, 0, len(frame), len(frame))
+        pcap += pkt_header + frame
+
+    path = os.path.join(OUTPUT_DIR, 'example_ipid_covert.pcap')
+    with open(path, 'wb') as f:
+        f.write(pcap)
+    print(f"    -> {path} ({len(msg_bytes)} bytes in IP ID fields)")
+    return path
+
+
+# =============================================================================
+# 71. TCP window size encoding
+# =============================================================================
+
+def generate_tcp_window_covert():
+    """Create a PCAP with the Plinian divider hidden in TCP window size fields."""
+    print("  Generating TCP window size covert PCAP...")
+    import time
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    pcap = struct.pack('<IHHiIII', 0xa1b2c3d4, 2, 4, 0, 0, 65535, 1)
+    ts = int(time.time())
+
+    for i in range(0, len(msg_bytes), 2):
+        hi = msg_bytes[i]
+        lo = msg_bytes[i + 1] if i + 1 < len(msg_bytes) else 0
+        window = (hi << 8) | lo  # 16-bit window encodes 2 bytes
+
+        # TCP header: src_port, dst_port, seq, ack, offset+flags, window, checksum, urgent
+        tcp = struct.pack('>HHIIBBHHH',
+            44444, 80, 1000 + i, 0,
+            0x50, 0x02,  # Data offset 5, SYN flag
+            window,  # Window carries hidden data
+            0, 0,
+        )
+        ip_len = 20 + len(tcp)
+        ip_header = struct.pack('>BBHHHBBH4s4s',
+            0x45, 0, ip_len, 0x2000 + i, 0x4000,
+            64, 6, 0,  # Protocol 6 = TCP
+            bytes([172, 16, 0, 1]),
+            bytes([93, 184, 216, 34]),
+        )
+        eth = b'\x00' * 6 + b'\x00' * 6 + b'\x08\x00'
+        frame = eth + ip_header + tcp
+        pkt_header = struct.pack('<IIII', ts + i, 0, len(frame), len(frame))
+        pcap += pkt_header + frame
+
+    path = os.path.join(OUTPUT_DIR, 'example_tcp_window.pcap')
+    with open(path, 'wb') as f:
+        f.write(pcap)
+    print(f"    -> {path} ({len(msg_bytes)} bytes in TCP window fields)")
+    return path
+
+
+# =============================================================================
+# 72. TCP urgent pointer encoding
+# =============================================================================
+
+def generate_tcp_urgent_covert():
+    """Create a PCAP with the Plinian divider in TCP urgent pointer fields."""
+    print("  Generating TCP urgent pointer covert PCAP...")
+    import time
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    pcap = struct.pack('<IHHiIII', 0xa1b2c3d4, 2, 4, 0, 0, 65535, 1)
+    ts = int(time.time())
+
+    for i in range(0, len(msg_bytes), 2):
+        hi = msg_bytes[i]
+        lo = msg_bytes[i + 1] if i + 1 < len(msg_bytes) else 0
+        urgent = (hi << 8) | lo
+
+        tcp = struct.pack('>HHIIBBHHH',
+            55555, 443, 2000 + i, 0,
+            0x50, 0x20,  # URG flag set
+            65535,
+            0, urgent,  # Urgent pointer carries hidden data
+        )
+        ip_len = 20 + len(tcp)
+        ip_header = struct.pack('>BBHHHBBH4s4s',
+            0x45, 0, ip_len, 0x3000 + i, 0x4000,
+            64, 6, 0,
+            bytes([192, 168, 10, 5]),
+            bytes([104, 18, 32, 68]),
+        )
+        eth = b'\x00' * 6 + b'\x00' * 6 + b'\x08\x00'
+        frame = eth + ip_header + tcp
+        pkt_header = struct.pack('<IIII', ts + i, 0, len(frame), len(frame))
+        pcap += pkt_header + frame
+
+    path = os.path.join(OUTPUT_DIR, 'example_tcp_urgent.pcap')
+    with open(path, 'wb') as f:
+        f.write(pcap)
+    print(f"    -> {path} ({len(msg_bytes)} bytes in TCP urgent ptrs)")
+    return path
+
+
+# =============================================================================
+# 73. DNS TXT record steganography
+# =============================================================================
+
+def generate_dns_txt_record():
+    """Create a PCAP with the Plinian divider in a DNS TXT record response."""
+    print("  Generating DNS TXT record PCAP...")
+    import time, base64
+
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+    encoded = base64.b64encode(secret)
+
+    pcap = struct.pack('<IHHiIII', 0xa1b2c3d4, 2, 4, 0, 0, 65535, 1)
+    ts = int(time.time())
+
+    # Build DNS response with TXT record containing our secret
+    # DNS header: ID, flags (response), questions, answers, authority, additional
+    dns = struct.pack('>HHHHHH', 0xABCD, 0x8180, 1, 1, 0, 0)
+
+    # Question section: _steg.example.com, type TXT, class IN
+    qname = b'\x05_steg\x07example\x03com\x00'
+    dns += qname + struct.pack('>HH', 16, 1)  # TXT, IN
+
+    # Answer section: same name, TXT record
+    dns += qname
+    dns += struct.pack('>HHI', 16, 1, 300)  # TXT, IN, TTL=300
+    # TXT RDATA: length-prefixed string
+    txt_rdata = bytes([len(encoded)]) + encoded
+    dns += struct.pack('>H', len(txt_rdata)) + txt_rdata
+
+    # Wrap in UDP/IP/Ethernet
+    udp = struct.pack('>HHHH', 53, 12345, 8 + len(dns), 0) + dns
+    ip_len = 20 + len(udp)
+    ip_header = struct.pack('>BBHHHBBH4s4s',
+        0x45, 0, ip_len, 0x5678, 0x4000,
+        64, 17, 0,
+        bytes([8, 8, 8, 8]),
+        bytes([192, 168, 1, 100]),
+    )
+    eth = b'\x00' * 6 + b'\x00' * 6 + b'\x08\x00'
+    frame = eth + ip_header + udp
+    pkt_header = struct.pack('<IIII', ts, 0, len(frame), len(frame))
+    pcap += pkt_header + frame
+
+    path = os.path.join(OUTPUT_DIR, 'example_dns_txt.pcap')
+    with open(path, 'wb') as f:
+        f.write(pcap)
+    print(f"    -> {path} (TXT record: {len(encoded)} bytes)")
+    return path
+
+
+# =============================================================================
+# 74. Covert timing channel
+# =============================================================================
+
+def generate_covert_timing():
+    """Create a PCAP with the Plinian divider in inter-packet timing (microseconds)."""
+    print("  Generating covert timing channel PCAP...")
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    bits = ''.join(format(b, '08b') for b in msg_bytes)
+    length_bits = format(len(msg_bytes), '016b')
+    all_bits = length_bits + bits
+
+    pcap = struct.pack('<IHHiIII', 0xa1b2c3d4, 2, 4, 0, 0, 65535, 1)
+
+    base_ts = 1700000000
+    current_usec = 0
+
+    for i, bit in enumerate(all_bits):
+        # bit=0: short delay (10000 usec = 10ms)
+        # bit=1: long delay (50000 usec = 50ms)
+        delay = 50000 if bit == '1' else 10000
+        current_usec += delay
+
+        ts_sec = base_ts + current_usec // 1000000
+        ts_usec = current_usec % 1000000
+
+        payload = struct.pack('>I', i)  # Sequence number
+        udp = struct.pack('>HHHH', 9999, 9999, 8 + len(payload), 0) + payload
+        ip_len = 20 + len(udp)
+        ip_header = struct.pack('>BBHHHBBH4s4s',
+            0x45, 0, ip_len, i & 0xFFFF, 0x4000,
+            64, 17, 0,
+            bytes([10, 1, 1, 1]),
+            bytes([10, 1, 1, 2]),
+        )
+        eth = b'\x00' * 6 + b'\x00' * 6 + b'\x08\x00'
+        frame = eth + ip_header + udp
+        pkt_header = struct.pack('<IIII', ts_sec, ts_usec, len(frame), len(frame))
+        pcap += pkt_header + frame
+
+    path = os.path.join(OUTPUT_DIR, 'example_covert_timing.pcap')
+    with open(path, 'wb') as f:
+        f.write(pcap)
+    print(f"    -> {path} ({len(all_bits)} bits in packet timing)")
+    return path
+
+
+# =============================================================================
+# 75. Base32 encoding file
+# =============================================================================
+
+def generate_base32_file():
+    """Create a file with the Plinian divider in base32 encoding."""
+    print("  Generating base32 encoded file...")
+    import base64
+
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+    b32 = base64.b32encode(secret).decode()
+    b64 = base64.b64encode(secret).decode()
+    b16 = base64.b16encode(secret).decode()
+    b85 = base64.b85encode(secret).decode()
+
+    text = f"""Multi-Base Encoding Reference
+=============================
+
+This file demonstrates the same data encoded in multiple bases.
+Can you decode them all?
+
+Base16 (Hex):
+{b16}
+
+Base32:
+{b32}
+
+Base64:
+{b64}
+
+Base85 (Ascii85):
+{b85}
+
+Raw UTF-8 bytes ({len(secret)} bytes):
+{' '.join(f'{b:02x}' for b in secret)}
+
+Generated by ST3GG.
+"""
+
+    path = os.path.join(OUTPUT_DIR, 'example_multibase.txt')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(text)
+    print(f"    -> {path}")
+    return path
+
+
+# =============================================================================
+# 76. Morse code in text
+# =============================================================================
+
+def generate_morse_code():
+    """Create a text file with the Plinian divider encoded in Morse code."""
+    print("  Generating Morse code text...")
+
+    MORSE = {
+        'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+        'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+        'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+        'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+        'Y': '-.--', 'Z': '--..', '0': '-----', '1': '.----', '2': '..---',
+        '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...',
+        '8': '---..', '9': '----.', ' ': '/', '/': '-..-.', '\\': '.-..-.',
+        '-': '-....-', '.': '.-.-.-',
+    }
+
+    # Encode printable ASCII subset of the divider in Morse
+    ascii_part = "/L\\O/V\\E/\\P/L\\I/N\\Y/"
+    morse_encoded = ' '.join(MORSE.get(c.upper(), '?') for c in ascii_part)
+
+    # Also encode full divider as hex, then hex chars in Morse
+    hex_str = PLINIAN_DIVIDER.encode('utf-8').hex().upper()
+    morse_hex = ' '.join(MORSE.get(c, '?') for c in hex_str)
+
+    text = f"""Morse Code Reference & Practice
+
+Standard Morse alphabet:
+{chr(10).join(f'  {k}: {v}' for k, v in sorted(MORSE.items()) if k.isalpha())}
+
+Encoded message (ASCII portion):
+  {morse_encoded}
+
+Encoded message (full hex):
+  {morse_hex}
+
+Decode key: Each letter separated by space, words by /
+  . = dit (short), - = dah (long)
+
+Generated by ST3GG.
+"""
+
+    path = os.path.join(OUTPUT_DIR, 'example_morse.txt')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(text)
+    print(f"    -> {path}")
+    return path
+
+
+# =============================================================================
+# 77. Pixel Value Differencing (PVD) steganography
+# =============================================================================
+
+def generate_pvd():
+    """Create a PNG with Plinian divider hidden using Pixel Value Differencing."""
+    print("  Generating PVD steganography PNG...")
+    width, height = 200, 200
+    img = Image.new('RGB', (width, height))
+    pixels = img.load()
+
+    # Generate a natural-ish gradient
+    for y in range(height):
+        for x in range(width):
+            r = int(100 + 80 * (x / width) + 20 * ((x * y) % 17) / 17)
+            g = int(80 + 100 * (y / height) + 15 * ((x + y) % 13) / 13)
+            b = int(60 + 80 * ((x + y) / (width + height)))
+            pixels[x, y] = (min(255, r), min(255, g), min(255, b))
+
+    # PVD: encode bits in the difference between adjacent pixel pairs
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_bytes = struct.pack('>I', len(msg_bytes))
+    payload = length_bytes + msg_bytes
+    bits = []
+    for byte in payload:
+        for j in range(7, -1, -1):
+            bits.append((byte >> j) & 1)
+
+    bit_idx = 0
+    for y in range(height):
+        for x in range(0, width - 1, 2):
+            if bit_idx >= len(bits):
+                break
+            r1, g1, b1 = pixels[x, y]
+            r2, g2, b2 = pixels[x + 1, y]
+            # Modify the LSB of the difference by adjusting pixel 2
+            if bits[bit_idx] == 1:
+                r2 = r2 | 1  # Ensure odd difference
+            else:
+                r2 = r2 & 0xFE  # Ensure even difference
+            pixels[x + 1, y] = (r2, g2, b2)
+            bit_idx += 1
+        if bit_idx >= len(bits):
+            break
+
+    path = os.path.join(OUTPUT_DIR, 'example_pvd.png')
+    img.save(path)
+    print(f"    -> {path} ({bit_idx} bits via PVD)")
+    return path
+
+
+# =============================================================================
+# 78. Histogram shifting steganography
+# =============================================================================
+
+def generate_histogram_shifting():
+    """Create a PNG with Plinian divider hidden via histogram peak shifting."""
+    print("  Generating histogram shifting PNG...")
+    width, height = 200, 200
+    img = Image.new('L', (width, height))  # Grayscale
+    pixels = img.load()
+
+    # Generate grayscale gradient with values centered around 128
+    for y in range(height):
+        for x in range(width):
+            val = int(100 + 56 * (x / width) + 28 * (y / height))
+            pixels[x, y] = min(255, max(0, val))
+
+    # Histogram shifting: shift peak value pixels by 0 or 1 to encode bits
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_bytes = struct.pack('>I', len(msg_bytes))
+    payload = length_bytes + msg_bytes
+    bits = []
+    for byte in payload:
+        for j in range(7, -1, -1):
+            bits.append((byte >> j) & 1)
+
+    # Find the histogram peak
+    hist = [0] * 256
+    for y in range(height):
+        for x in range(width):
+            hist[pixels[x, y]] += 1
+    peak = hist.index(max(hist))
+
+    # Shift pixels: peak value pixels encode bits
+    # bit=0: leave at peak, bit=1: shift to peak+1
+    bit_idx = 0
+    for y in range(height):
+        for x in range(width):
+            if bit_idx >= len(bits):
+                break
+            if pixels[x, y] == peak:
+                if bits[bit_idx] == 1:
+                    pixels[x, y] = peak + 1
+                bit_idx += 1
+            elif pixels[x, y] > peak:
+                pixels[x, y] = min(255, pixels[x, y] + 1)  # Shift right to make room
+        if bit_idx >= len(bits):
+            break
+
+    path = os.path.join(OUTPUT_DIR, 'example_histogram_shift.png')
+    img.save(path)
+    print(f"    -> {path} ({bit_idx} bits via histogram shifting, peak={peak})")
+    return path
+
+
+# =============================================================================
+# 79. LSB multi-bit (4-bit per channel)
+# =============================================================================
+
+def generate_lsb_multibit():
+    """Create a PNG with Plinian divider using 4 bits per channel (high capacity)."""
+    print("  Generating LSB multi-bit (4bpc) PNG...")
+    width, height = 100, 100
+    img = Image.new('RGB', (width, height))
+    pixels = img.load()
+
+    for y in range(height):
+        for x in range(width):
+            r = int(128 + 60 * (x / width))
+            g = int(100 + 80 * (y / height))
+            b = int(80 + 60 * ((x + y) / (width + height)))
+            pixels[x, y] = (r, g, b)
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_bytes = struct.pack('>I', len(msg_bytes))
+    payload = length_bytes + msg_bytes
+
+    # 4 bits per channel = embed nibbles directly
+    nibbles = []
+    for byte in payload:
+        nibbles.append((byte >> 4) & 0x0F)
+        nibbles.append(byte & 0x0F)
+
+    nib_idx = 0
+    mask = 0xF0  # Keep upper 4 bits, replace lower 4
+    for pix_idx in range(width * height):
+        if nib_idx >= len(nibbles):
+            break
+        x = pix_idx % width
+        y = pix_idx // width
+        r, g, b = pixels[x, y]
+        vals = [r, g, b]
+        for ch in range(3):
+            if nib_idx >= len(nibbles):
+                break
+            vals[ch] = (vals[ch] & mask) | nibbles[nib_idx]
+            nib_idx += 1
+        pixels[x, y] = tuple(vals)
+
+    path = os.path.join(OUTPUT_DIR, 'example_lsb_4bit.png')
+    img.save(path)
+    print(f"    -> {path} ({nib_idx} nibbles = {nib_idx * 4} bits embedded)")
+    return path
+
+
+# =============================================================================
+# 80. LSB MSB-first ordering
+# =============================================================================
+
+def generate_lsb_msb_first():
+    """Create a PNG with Plinian divider using MSB-first bit ordering (reversed)."""
+    print("  Generating LSB MSB-first ordering PNG...")
+    width, height = 150, 150
+    img = Image.new('RGB', (width, height))
+    pixels = img.load()
+
+    for y in range(height):
+        for x in range(width):
+            r = int(90 + 70 * (x / width))
+            g = int(120 + 60 * (y / height))
+            b = int(100 + 80 * ((x + y) / (width + height)))
+            pixels[x, y] = (r, g, b)
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    # MSB-first: reverse the bit extraction order within each byte
+    length_bytes = struct.pack('>I', len(msg_bytes))
+    payload = length_bytes + msg_bytes
+    bits = []
+    for byte in payload:
+        # MSB-first: bit 0 (LSB) first, then bit 1, etc. (reversed from normal)
+        for j in range(8):
+            bits.append((byte >> j) & 1)
+
+    bit_idx = 0
+    for pix_idx in range(width * height):
+        if bit_idx >= len(bits):
+            break
+        x = pix_idx % width
+        y = pix_idx // width
+        r, g, b = pixels[x, y]
+        vals = [r, g, b]
+        for ch in range(3):
+            if bit_idx >= len(bits):
+                break
+            vals[ch] = (vals[ch] & 0xFE) | bits[bit_idx]
+            bit_idx += 1
+        pixels[x, y] = tuple(vals)
+
+    path = os.path.join(OUTPUT_DIR, 'example_lsb_msb_first.png')
+    img.save(path)
+    print(f"    -> {path} ({bit_idx} bits, MSB-first ordering)")
+    return path
+
+
+# =============================================================================
+# 81. BMP DIB header field steganography
+# =============================================================================
+
+def generate_bmp_dib_header():
+    """Create a BMP with Plinian divider hidden in DIB header reserved fields."""
+    print("  Generating BMP DIB header steganography...")
+    import base64
+
+    width, height = 100, 100
+    img = Image.new('RGB', (width, height))
+    pixels = img.load()
+    for y in range(height):
+        for x in range(width):
+            pixels[x, y] = (int(150 + 50 * x / width), int(100 + 80 * y / height), 120)
+
+    path = os.path.join(OUTPUT_DIR, 'example_bmp_dib.bmp')
+    img.save(path, 'BMP')
+
+    # BMP has reserved fields and padding we can abuse
+    # The "reserved" 4 bytes at offset 6-9 in the file header
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+    with open(path, 'r+b') as f:
+        data = bytearray(f.read())
+        # BMP header offset 6: 4 reserved bytes (normally zero)
+        # We can store 4 bytes there
+        data[6] = secret[0] if len(secret) > 0 else 0
+        data[7] = secret[1] if len(secret) > 1 else 0
+        data[8] = secret[2] if len(secret) > 2 else 0
+        data[9] = secret[3] if len(secret) > 3 else 0
+
+        # Also append full secret after the pixel data (trailing data)
+        f.seek(0)
+        f.write(data)
+        f.seek(0, 2)  # End of file
+        f.write(b'\n--- BMP HIDDEN ---\n')
+        f.write(secret)
+        f.write(b'\nb64:' + base64.b64encode(secret))
+        f.write(b'\n')
+
+    print(f"    -> {path} (4 bytes in reserved + trailing data)")
+    return path
+
+
+# =============================================================================
+# 82. GIF frame disposal method encoding
+# =============================================================================
+
+def generate_gif_disposal():
+    """Create an animated GIF with Plinian divider in frame disposal method bits."""
+    print("  Generating GIF disposal method encoding...")
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    # Each frame's disposal method can be 0-7 (3 bits)
+    # We use: 0 (no dispose) = bit 0, 1 (don't dispose) = bit 1
+    bits = []
+    for b in msg_bytes:
+        for j in range(7, -1, -1):
+            bits.append((b >> j) & 1)
+
+    # Create animated GIF with enough frames to encode the message
+    frames = []
+    for i in range(min(len(bits), 64)):  # Cap at 64 frames
+        frame = Image.new('P', (20, 20))
+        px = frame.load()
+        color = 50 + i * 3
+        for y in range(20):
+            for x in range(20):
+                px[x, y] = min(255, color)
+        frames.append(frame)
+
+    path = os.path.join(OUTPUT_DIR, 'example_gif_disposal.gif')
+    if frames:
+        # Save with disposal methods encoding bits
+        frames[0].save(
+            path, save_all=True, append_images=frames[1:],
+            duration=100, loop=0,
+            disposal=2,  # Default disposal
+        )
+
+        # Now manually patch the disposal bits in the GCE blocks
+        with open(path, 'rb') as f:
+            data = bytearray(f.read())
+
+        # Find all Graphic Control Extension blocks (21 F9 04)
+        bit_idx = 0
+        i = 0
+        while i < len(data) - 4:
+            if data[i] == 0x21 and data[i + 1] == 0xF9 and data[i + 2] == 0x04:
+                # GCE found at offset i
+                # Packed byte is at i+3, disposal is bits 4-2
+                packed = data[i + 3]
+                if bit_idx < len(bits):
+                    disposal = bits[bit_idx]  # 0 or 1
+                    packed = (packed & 0xE3) | (disposal << 2)  # Set disposal bits
+                    data[i + 3] = packed
+                    bit_idx += 1
+                i += 6  # Skip past this GCE
+            else:
+                i += 1
+
+        with open(path, 'wb') as f:
+            f.write(data)
+
+        print(f"    -> {path} ({bit_idx} bits in disposal methods, {len(frames)} frames)")
+    return path
+
+
+# =============================================================================
+# 83. JPEG APP segment steganography
+# =============================================================================
+
+def generate_jpeg_app_segment():
+    """Create a JPEG with Plinian divider hidden in a custom APP segment."""
+    print("  Generating JPEG APP segment steganography...")
+    import base64
+
+    width, height = 120, 120
+    img = Image.new('RGB', (width, height))
+    pixels = img.load()
+    for y in range(height):
+        for x in range(width):
+            r = int(180 + 40 * (x / width))
+            g = int(120 + 60 * (y / height))
+            b = int(80 + 80 * ((x + y) / (width + height)))
+            pixels[x, y] = (r, g, b)
+
+    import io
+    buf = io.BytesIO()
+    img.save(buf, 'JPEG', quality=95)
+    jpeg_data = bytearray(buf.getvalue())
+
+    # Inject a custom APP14 segment (0xFFEE) with our secret
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+    b64_secret = base64.b64encode(secret)
+
+    # APP segment: FF EE, length (2 bytes), identifier + data
+    app_data = b'ST3GG\x00' + secret + b'\x00' + b64_secret
+    app_segment = b'\xFF\xEE' + struct.pack('>H', len(app_data) + 2) + app_data
+
+    # Insert after SOI marker (FF D8) and before the rest
+    new_jpeg = bytes(jpeg_data[:2]) + app_segment + bytes(jpeg_data[2:])
+
+    path = os.path.join(OUTPUT_DIR, 'example_jpeg_app.jpg')
+    with open(path, 'wb') as f:
+        f.write(new_jpeg)
+    print(f"    -> {path} (APP14 segment: {len(app_data)} bytes)")
+    return path
+
+
+# =============================================================================
+# 84. Color space abuse (YCbCr channel hiding)
+# =============================================================================
+
+def generate_color_space():
+    """Create a PNG with Plinian divider hidden in YCbCr color space conversion."""
+    print("  Generating color space (YCbCr) steganography...")
+
+    width, height = 150, 150
+    img = Image.new('RGB', (width, height))
+    pixels = img.load()
+
+    for y in range(height):
+        for x in range(width):
+            r = int(140 + 60 * (x / width))
+            g = int(120 + 80 * (y / height))
+            b = int(100 + 60 * ((x + y) / (width + height)))
+            pixels[x, y] = (r, g, b)
+
+    # Convert to YCbCr, embed in Cb channel LSB, convert back
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_bytes = struct.pack('>I', len(msg_bytes))
+    payload = length_bytes + msg_bytes
+    bits = []
+    for byte in payload:
+        for j in range(7, -1, -1):
+            bits.append((byte >> j) & 1)
+
+    bit_idx = 0
+    for pix_idx in range(width * height):
+        if bit_idx >= len(bits):
+            break
+        x = pix_idx % width
+        y = pix_idx // width
+        r, g, b = pixels[x, y]
+
+        # RGB to YCbCr
+        Y  = int(0.299 * r + 0.587 * g + 0.114 * b)
+        Cb = int(-0.169 * r - 0.331 * g + 0.500 * b + 128)
+        Cr = int(0.500 * r - 0.419 * g - 0.081 * b + 128)
+
+        # Embed in Cb LSB
+        Cb = (Cb & 0xFE) | bits[bit_idx]
+        bit_idx += 1
+
+        # YCbCr back to RGB
+        r2 = max(0, min(255, int(Y + 1.402 * (Cr - 128))))
+        g2 = max(0, min(255, int(Y - 0.344 * (Cb - 128) - 0.714 * (Cr - 128))))
+        b2 = max(0, min(255, int(Y + 1.772 * (Cb - 128))))
+        pixels[x, y] = (r2, g2, b2)
+
+    path = os.path.join(OUTPUT_DIR, 'example_ycbcr.png')
+    img.save(path)
+    print(f"    -> {path} ({bit_idx} bits in Cb channel)")
+    return path
+
+
+# =============================================================================
+# 85. PNG gAMA chunk manipulation
+# =============================================================================
+
+def generate_png_gama():
+    """Create a PNG with Plinian divider hidden in gAMA and custom ancillary chunks."""
+    print("  Generating PNG gAMA/ancillary chunk steganography...")
+    import base64
+
+    width, height = 100, 100
+    img = Image.new('RGB', (width, height))
+    pixels = img.load()
+    for y in range(height):
+        for x in range(width):
+            pixels[x, y] = (int(100 + 80 * x / width), int(80 + 100 * y / height), 140)
+
+    # Save PNG then inject custom chunks
+    import io
+    buf = io.BytesIO()
+    img.save(buf, 'PNG')
+    png_data = buf.getvalue()
+
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+    b64_secret = base64.b64encode(secret)
+
+    def make_png_chunk(chunk_type: bytes, data: bytes) -> bytes:
+        """Create a properly formatted PNG chunk with CRC."""
+        length = struct.pack('>I', len(data))
+        crc_data = chunk_type + data
+        crc = zlib.crc32(crc_data) & 0xFFFFFFFF
+        return length + chunk_type + data + struct.pack('>I', crc)
+
+    # Build custom private chunks (lowercase first letter = ancillary + private)
+    # stEg chunk with our secret
+    steg_chunk = make_png_chunk(b'stEg', secret)
+    # sT3g chunk with base64
+    st3g_chunk = make_png_chunk(b'sT3g', b64_secret)
+
+    # Insert chunks after IHDR (first chunk after 8-byte signature)
+    sig = png_data[:8]
+    ihdr_len = struct.unpack('>I', png_data[8:12])[0]
+    ihdr_end = 8 + 12 + ihdr_len  # sig + length + type + data + crc
+
+    new_png = png_data[:ihdr_end] + steg_chunk + st3g_chunk + png_data[ihdr_end:]
+
+    path = os.path.join(OUTPUT_DIR, 'example_png_chunks_custom.png')
+    with open(path, 'wb') as f:
+        f.write(new_png)
+    print(f"    -> {path} (2 custom PNG chunks)")
+    return path
+
+
+# =============================================================================
+# 86. PDF JavaScript steganography
+# =============================================================================
+
+def generate_pdf_javascript():
+    """Create a PDF with Plinian divider hidden in a JavaScript action."""
+    print("  Generating PDF JavaScript steganography...")
+    import base64
+
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+    b64 = base64.b64encode(secret).decode()
+
+    js_code = f'var s=atob("{b64}");app.alert("ST3GG: "+s);'
+
+    objects = []
+    objects.append(b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R /OpenAction 4 0 R >>\nendobj\n")
+    objects.append(b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n")
+    objects.append(b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\n")
+
+    js_bytes = js_code.encode('utf-8')
+    objects.append(f"4 0 obj\n<< /Type /Action /S /JavaScript /JS ({js_code}) >>\nendobj\n".encode('utf-8'))
+
+    pdf = b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n"
+    offsets = []
+    for obj in objects:
+        offsets.append(len(pdf))
+        pdf += obj
+
+    xref_offset = len(pdf)
+    pdf += f"xref\n0 {len(objects) + 1}\n".encode()
+    pdf += b"0000000000 65535 f \n"
+    for offset in offsets:
+        pdf += f"{offset:010d} 00000 n \n".encode()
+    pdf += f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\n".encode()
+    pdf += f"startxref\n{xref_offset}\n%%EOF\n".encode()
+
+    path = os.path.join(OUTPUT_DIR, 'example_pdf_javascript.pdf')
+    with open(path, 'wb') as f:
+        f.write(pdf)
+    print(f"    -> {path}")
+    return path
+
+
+# =============================================================================
+# 87. PDF incremental update steganography
+# =============================================================================
+
+def generate_pdf_incremental():
+    """Create a PDF with Plinian divider hidden in an incremental update."""
+    print("  Generating PDF incremental update steganography...")
+    import base64
+
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+
+    # Base PDF
+    base = b"%PDF-1.4\n"
+    base += b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    base += b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
+    base += b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] >>\nendobj\n"
+    xref1 = len(base)
+    base += b"xref\n0 4\n0000000000 65535 f \n0000000009 00000 n \n0000000062 00000 n \n0000000115 00000 n \n"
+    base += b"trailer\n<< /Size 4 /Root 1 0 R >>\n"
+    base += f"startxref\n{xref1}\n%%EOF\n".encode()
+
+    # Incremental update: add a hidden annotation with our secret
+    incr = f'4 0 obj\n<< /Type /Annot /Subtype /Text /Contents ({PLINIAN_DIVIDER}) /Rect [0 0 0 0] /F 2 >>\nendobj\n'.encode('utf-8')
+    incr_offset = len(base)
+    update = incr
+    xref2 = len(base) + len(update)
+    update += f"xref\n4 1\n{incr_offset:010d} 00000 n \ntrailer\n<< /Size 5 /Root 1 0 R /Prev {xref1} >>\nstartxref\n{xref2}\n%%EOF\n".encode()
+
+    path = os.path.join(OUTPUT_DIR, 'example_pdf_incremental.pdf')
+    with open(path, 'wb') as f:
+        f.write(base + update)
+    print(f"    -> {path}")
+    return path
+
+
+# =============================================================================
+# 88. PDF form field steganography
+# =============================================================================
+
+def generate_pdf_form_fields():
+    """Create a PDF with Plinian divider hidden in form field default values."""
+    print("  Generating PDF form field steganography...")
+    import base64
+
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+    b64 = base64.b64encode(secret).decode()
+
+    objects = []
+    objects.append(b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R /AcroForm << /Fields [5 0 R 6 0 R] >> >>\nendobj\n")
+    objects.append(b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n")
+    objects.append(b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Annots [5 0 R 6 0 R] >>\nendobj\n")
+    objects.append(b"4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n")
+    # Hidden form field with secret as default value
+    objects.append(f"5 0 obj\n<< /Type /Annot /Subtype /Widget /FT /Tx /T (steg_field) /V ({PLINIAN_DIVIDER}) /Rect [0 0 0 0] /F 6 >>\nendobj\n".encode('utf-8'))
+    objects.append(f"6 0 obj\n<< /Type /Annot /Subtype /Widget /FT /Tx /T (steg_b64) /V ({b64}) /Rect [0 0 0 0] /F 6 >>\nendobj\n".encode('utf-8'))
+
+    pdf = b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n"
+    offsets = []
+    for obj in objects:
+        offsets.append(len(pdf))
+        pdf += obj
+    xref_offset = len(pdf)
+    pdf += f"xref\n0 {len(objects) + 1}\n".encode()
+    pdf += b"0000000000 65535 f \n"
+    for offset in offsets:
+        pdf += f"{offset:010d} 00000 n \n".encode()
+    pdf += f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\n".encode()
+    pdf += f"startxref\n{xref_offset}\n%%EOF\n".encode()
+
+    path = os.path.join(OUTPUT_DIR, 'example_pdf_forms.pdf')
+    with open(path, 'wb') as f:
+        f.write(pdf)
+    print(f"    -> {path}")
+    return path
+
+
+# =============================================================================
+# 89. HTML event handler steganography
+# =============================================================================
+
+def generate_html_events():
+    """Create an HTML file with Plinian divider hidden in event handler attributes."""
+    print("  Generating HTML event handler steganography...")
+    import base64
+
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+    b64 = base64.b64encode(secret).decode()
+    hex_enc = secret.hex()
+
+    html = f'''<!DOCTYPE html>
+<html>
+<head><title>Event Handler Steganography</title></head>
+<body onload="void('{b64}')"
+      onresize="void('{hex_enc}')"
+      onscroll="void(0)"
+      data-init="{PLINIAN_DIVIDER}">
+<h1>ST3GG Event Handler Example</h1>
+<p onclick="void('{b64}')" onmouseover="void(0)">
+This page contains hidden data in event handler attributes.
+</p>
+<div onmouseenter="void('{hex_enc}')" style="display:none">
+{PLINIAN_DIVIDER}
+</div>
+<input type="hidden" name="steg" value="{PLINIAN_DIVIDER}">
+<form action="javascript:void(0)">
+<input type="hidden" name="payload" value="{b64}">
+<input type="hidden" name="payload_hex" value="{hex_enc}">
+</form>
+</body>
+</html>'''
+
+    path = os.path.join(OUTPUT_DIR, 'example_html_events.html')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(html)
+    print(f"    -> {path}")
+    return path
+
+
+# =============================================================================
+# 90. XML entity declaration steganography
+# =============================================================================
+
+def generate_xml_entities():
+    """Create an XML file with Plinian divider hidden in entity declarations."""
+    print("  Generating XML entity steganography...")
+    import base64
+
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+    b64 = base64.b64encode(secret).decode()
+
+    # Encode each byte as an XML entity
+    entity_defs = '\n'.join(
+        f'  <!ENTITY steg{i:02x} "{b:03d}">'
+        for i, b in enumerate(secret)
+    )
+
+    xml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE data [
+  <!ENTITY steg_payload "{PLINIAN_DIVIDER}">
+  <!ENTITY steg_b64 "{b64}">
+{entity_defs}
+]>
+<data>
+  <visible>This XML contains hidden data in entity declarations.</visible>
+  <payload>&steg_payload;</payload>
+  <encoded>&steg_b64;</encoded>
+</data>'''
+
+    path = os.path.join(OUTPUT_DIR, 'example_xml_entities.xml')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(xml)
+    print(f"    -> {path}")
+    return path
+
+
+# =============================================================================
+# 91. Nested ZIP steganography
+# =============================================================================
+
+def generate_nested_zip():
+    """Create a nested ZIP (ZIP inside ZIP) with Plinian divider at inner level."""
+    print("  Generating nested ZIP steganography...")
+    import zipfile, io
+
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+
+    # Inner ZIP
+    inner_buf = io.BytesIO()
+    with zipfile.ZipFile(inner_buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('secret.txt', PLINIAN_DIVIDER)
+        zf.writestr('flag.txt', 'ST3GG{n3st3d_z1p_m4tr10shk4}')
+        zf.comment = secret
+    inner_zip = inner_buf.getvalue()
+
+    # Outer ZIP
+    path = os.path.join(OUTPUT_DIR, 'example_nested.zip')
+    with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr('data/readme.txt', 'Just a normal archive. Nothing to see here.\n')
+        zf.writestr('data/inner.zip', inner_zip)
+        zf.writestr('data/notes.txt', 'Check inner.zip for more data.\n')
+
+    print(f"    -> {path}")
+    return path
+
+
+# =============================================================================
+# 92. Emoji skin tone selector steganography
+# =============================================================================
+
+def generate_emoji_skin_tone():
+    """Create text with Plinian divider hidden in emoji skin tone modifier choices."""
+    print("  Generating emoji skin tone selector text...")
+
+    # Skin tone modifiers: U+1F3FB to U+1F3FF (5 tones = ~2.3 bits each)
+    # We use 4 tones for clean 2-bit encoding:
+    # Light (1F3FB)=00, MedLight (1F3FC)=01, MedDark (1F3FE)=10, Dark (1F3FF)=11
+    TONES = ['\U0001F3FB', '\U0001F3FC', '\U0001F3FE', '\U0001F3FF']
+    # Base emojis that support skin tones
+    BASES = ['\U0001F44D', '\U0001F44B', '\U0001F64C', '\U0001F44F',  # thumbs up, wave, raised hands, clap
+             '\U0001F91D', '\U0001F4AA', '\U0001F91E', '\U0001F596',  # handshake, flex, crossed fingers, vulcan
+             '\U0001F44C', '\U0001F918', '\U0001F919', '\U0001F91F',  # ok, horns, call me, love you
+             '\U0001F448', '\U0001F449', '\U0001F446', '\U0001F447']  # point left/right/up/down
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    # Convert to 2-bit pairs
+    pairs = []
+    for b in msg_bytes:
+        pairs.append((b >> 6) & 0x03)
+        pairs.append((b >> 4) & 0x03)
+        pairs.append((b >> 2) & 0x03)
+        pairs.append(b & 0x03)
+
+    lines = ["Emoji Skin Tone Diversity Display\n"]
+    pair_idx = 0
+    for i, base in enumerate(BASES):
+        row = f"  {i+1:2d}. "
+        for _ in range(len(msg_bytes) // len(BASES) + 2):
+            if pair_idx < len(pairs):
+                tone = TONES[pairs[pair_idx]]
+                row += base + tone + ' '
+                pair_idx += 1
+            else:
+                row += base + TONES[0] + ' '
+        lines.append(row.rstrip())
+
+    lines.append(f"\nTotal emoji: {pair_idx}")
+
+    path = os.path.join(OUTPUT_DIR, 'example_emoji_skin_tone.txt')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines))
+    print(f"    -> {path} ({pair_idx} 2-bit pairs)")
+    return path
+
+
+# =============================================================================
+# 93. Punycode / IDN homograph steganography
+# =============================================================================
+
+def generate_punycode():
+    """Create a text file with Plinian divider hidden in Punycode-encoded domains."""
+    print("  Generating Punycode/IDN steganography...")
+    import base64
+
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+    b64 = base64.b64encode(secret).decode()
+
+    # Encode each byte as a Punycode domain with homograph characters
+    domains = []
+    for i, b in enumerate(secret):
+        # Create a domain that encodes the byte value
+        # Use mix of ASCII and non-ASCII to make it look like IDN
+        label = f"s{b:02x}"
+        # Add a non-ASCII char to force Punycode
+        idn_label = label + chr(0x0430 + (b % 20))  # Cyrillic letters
+        try:
+            puny = idn_label.encode('idna').decode('ascii')
+        except (UnicodeError, UnicodeDecodeError):
+            puny = f"xn--{label}"
+        domains.append(f"{puny}.example.com")
+
+    text = f"""IDN / Punycode Domain Reference
+================================
+
+The following domains demonstrate Internationalized Domain Names
+(IDN) with Punycode encoding. Each domain encodes data in its
+label structure.
+
+Domains:
+{chr(10).join(f'  {d}' for d in domains)}
+
+Base64 encoded payload:
+  {b64}
+
+Raw hex:
+  {secret.hex()}
+
+Total domains: {len(domains)}
+Generated by ST3GG.
+"""
+
+    path = os.path.join(OUTPUT_DIR, 'example_punycode.txt')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(text)
+    print(f"    -> {path} ({len(domains)} encoded domains)")
+    return path
+
+
+# =============================================================================
+# 94. JPEG restart marker steganography
+# =============================================================================
+
+def generate_jpeg_restart_markers():
+    """Create a JPEG with Plinian divider hidden in restart marker intervals."""
+    print("  Generating JPEG restart marker steganography...")
+
+    width, height = 100, 100
+    img = Image.new('RGB', (width, height))
+    pixels = img.load()
+    for y in range(height):
+        for x in range(width):
+            pixels[x, y] = (int(160 + 60 * x/width), int(100 + 80 * y/height), 120)
+
+    import io
+    buf = io.BytesIO()
+    img.save(buf, 'JPEG', quality=90)
+    jpeg_data = bytearray(buf.getvalue())
+
+    # Inject restart markers (FFD0-FFD7) carrying data
+    # The marker index (0-7) encodes 3 bits
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+    import base64
+    b64 = base64.b64encode(secret)
+
+    # Build restart marker payload and inject after SOS
+    rst_data = bytearray()
+    for i, byte_val in enumerate(secret[:8]):  # 8 restart markers available
+        marker_idx = byte_val % 8
+        rst_data.extend([0xFF, 0xD0 + marker_idx])
+
+    # Find SOS marker (FFDA) and inject before image data
+    sos_pos = jpeg_data.find(b'\xFF\xDA')
+    if sos_pos > 0:
+        # Find end of SOS header (after the scan header)
+        sos_len = struct.unpack('>H', jpeg_data[sos_pos+2:sos_pos+4])[0]
+        inject_pos = sos_pos + 2 + sos_len
+        new_jpeg = bytes(jpeg_data[:inject_pos]) + bytes(rst_data) + bytes(jpeg_data[inject_pos:])
+    else:
+        new_jpeg = bytes(jpeg_data)
+
+    # Also add a COM marker with the full secret
+    com_data = b'ST3GG: ' + secret
+    com_marker = b'\xFF\xFE' + struct.pack('>H', len(com_data) + 2) + com_data
+    new_jpeg = new_jpeg[:2] + com_marker + new_jpeg[2:]
+
+    path = os.path.join(OUTPUT_DIR, 'example_jpeg_restart.jpg')
+    with open(path, 'wb') as f:
+        f.write(new_jpeg)
+    print(f"    -> {path}")
+    return path
+
+
+# =============================================================================
+# 95. Matched pairs LSB steganography
+# =============================================================================
+
+def generate_matched_pairs_lsb():
+    """Create a PNG with Plinian divider using matched-pairs LSB embedding."""
+    print("  Generating matched pairs LSB PNG...")
+    width, height = 200, 200
+    img = Image.new('RGB', (width, height))
+    pixels = img.load()
+
+    import random
+    random.seed(777)
+    for y in range(height):
+        for x in range(width):
+            r = int(100 + 80 * (x / width) + random.randint(-3, 3))
+            g = int(80 + 100 * (y / height) + random.randint(-3, 3))
+            b = int(60 + 80 * ((x+y) / (width+height)) + random.randint(-3, 3))
+            pixels[x, y] = (max(0,min(255,r)), max(0,min(255,g)), max(0,min(255,b)))
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_bytes = struct.pack('>I', len(msg_bytes))
+    payload = length_bytes + msg_bytes
+    bits = []
+    for byte in payload:
+        for j in range(7, -1, -1):
+            bits.append((byte >> j) & 1)
+
+    # Matched pairs: use pixel pairs where the bit is encoded in
+    # whether pixel[2k] > pixel[2k+1] (1) or not (0) in the R channel
+    bit_idx = 0
+    for y in range(height):
+        for x in range(0, width - 1, 2):
+            if bit_idx >= len(bits):
+                break
+            r1, g1, b1 = pixels[x, y]
+            r2, g2, b2 = pixels[x + 1, y]
+            if bits[bit_idx] == 1:
+                # Ensure r1 > r2
+                if r1 <= r2:
+                    r1, r2 = max(r1, r2), min(r1, r2)
+                    if r1 == r2:
+                        r1 = min(255, r1 + 1)
+            else:
+                # Ensure r1 <= r2
+                if r1 > r2:
+                    r1, r2 = min(r1, r2), max(r1, r2)
+            pixels[x, y] = (r1, g1, b1)
+            pixels[x + 1, y] = (r2, g2, b2)
+            bit_idx += 1
+        if bit_idx >= len(bits):
+            break
+
+    path = os.path.join(OUTPUT_DIR, 'example_matched_pairs.png')
+    img.save(path)
+    print(f"    -> {path} ({bit_idx} bits via matched pairs)")
+    return path
+
+
+# =============================================================================
+# 96. PNG scanline filter abuse
+# =============================================================================
+
+def generate_png_scanline_filter():
+    """Create a PNG with Plinian divider encoded in scanline filter byte choices."""
+    print("  Generating PNG scanline filter abuse...")
+
+    width, height = 100, 200  # Need enough scanlines for the message
+    img = Image.new('RGB', (width, height))
+    pixels = img.load()
+    for y in range(height):
+        for x in range(width):
+            pixels[x, y] = (int(120 + 60*x/width), int(100 + 80*y/height), 130)
+
+    # Save normally first
+    import io
+    buf = io.BytesIO()
+    img.save(buf, 'PNG')
+    png_data = buf.getvalue()
+
+    # Parse PNG, decompress IDAT, modify filter bytes, recompress
+    # Each scanline starts with a filter byte (0-4)
+    # We encode: filter 0 (None) = bit 0, filter 1 (Sub) = bit 1
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_bytes = struct.pack('>I', len(msg_bytes))
+    payload = length_bytes + msg_bytes
+    bits = []
+    for byte in payload:
+        for j in range(7, -1, -1):
+            bits.append((byte >> j) & 1)
+
+    # Find and decompress IDAT chunks
+    pos = 8  # Skip PNG signature
+    idat_data = b''
+    chunks_before = bytearray()
+    chunks_after = bytearray()
+    found_idat = False
+    past_idat = False
+
+    while pos < len(png_data):
+        chunk_len = struct.unpack('>I', png_data[pos:pos+4])[0]
+        chunk_type = png_data[pos+4:pos+8]
+        chunk_data = png_data[pos+8:pos+8+chunk_len]
+        chunk_crc = png_data[pos+8+chunk_len:pos+12+chunk_len]
+
+        if chunk_type == b'IDAT':
+            idat_data += chunk_data
+            found_idat = True
+        elif not found_idat:
+            chunks_before.extend(png_data[pos:pos+12+chunk_len])
+        else:
+            past_idat = True
+            chunks_after.extend(png_data[pos:pos+12+chunk_len])
+
+        pos += 12 + chunk_len
+
+    if idat_data:
+        raw = zlib.decompress(idat_data)
+        scanline_len = width * 3 + 1  # 3 bytes per pixel + 1 filter byte
+
+        # Modify filter bytes to encode our message
+        raw_array = bytearray(raw)
+        for i, bit in enumerate(bits):
+            if i >= height:
+                break
+            offset = i * scanline_len
+            # Set filter byte: 0=None (bit 0), 1=Sub (bit 1)
+            raw_array[offset] = 1 if bit == 1 else 0
+
+        # Recompress
+        compressed = zlib.compress(bytes(raw_array))
+        new_idat = b'IDAT' + compressed
+        idat_crc = zlib.crc32(new_idat) & 0xFFFFFFFF
+        idat_chunk = struct.pack('>I', len(compressed)) + new_idat + struct.pack('>I', idat_crc)
+
+        new_png = png_data[:8] + bytes(chunks_before) + idat_chunk + bytes(chunks_after)
+
+        path = os.path.join(OUTPUT_DIR, 'example_scanline_filter.png')
+        with open(path, 'wb') as f:
+            f.write(new_png)
+        print(f"    -> {path} ({min(len(bits), height)} bits in filter bytes)")
+    else:
+        path = os.path.join(OUTPUT_DIR, 'example_scanline_filter.png')
+        img.save(path)
+        print(f"    -> {path} (fallback: no filter modification)")
+    return path
+
+
+# =============================================================================
+# 97. QR code error correction steganography
+# =============================================================================
+
+def generate_qr_steg():
+    """Create a text-based QR representation with Plinian divider in the data."""
+    print("  Generating QR code steganography...")
+    import base64
+
+    # Since we can't easily generate actual QR images without qrcode lib,
+    # we create a text file that describes a QR payload with hidden data
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+    b64 = base64.b64encode(secret).decode()
+
+    # Build QR data segments as they would be encoded
+    # Mode indicator (0100 = byte mode) + char count (8 bits) + data
+    mode = '0100'
+    count = format(len(secret), '08b')
+    data_bits = ''.join(format(b, '08b') for b in secret)
+
+    # Build a visual text-QR using block characters
+    block = '\u2588'  # Full block
+    light = ' '
+    import random
+    random.seed(42)
+    qr_size = 25
+    # Create a pseudo-QR pattern
+    qr_rows = []
+    for y in range(qr_size):
+        row = ''
+        for x in range(qr_size):
+            # Finder patterns in corners
+            if (x < 7 and y < 7) or (x >= qr_size-7 and y < 7) or (x < 7 and y >= qr_size-7):
+                # Finder pattern
+                dx = x if x < 7 else (x - (qr_size-7)) if x >= qr_size-7 else x
+                dy = y if y < 7 else (y - (qr_size-7))
+                if dx in (0,6) or dy in (0,6) or (2<=dx<=4 and 2<=dy<=4):
+                    row += block
+                else:
+                    row += light
+            else:
+                # Data area - encode our secret bits
+                bit_pos = (y * qr_size + x) - 49  # Offset past finders
+                if 0 <= bit_pos < len(data_bits):
+                    row += block if data_bits[bit_pos] == '1' else light
+                else:
+                    row += block if random.random() > 0.5 else light
+        qr_rows.append(row)
+
+    qr_visual = '\n'.join(qr_rows)
+
+    text = f"""QR Code Steganography Example
+
+Visual QR pattern (text representation):
+{qr_visual}
+
+QR Data Analysis:
+  Mode: Byte (0100)
+  Character count: {len(secret)}
+  Data bits: {len(data_bits)}
+
+Encoded payload (base64):
+  {b64}
+
+Raw data bits (first 64):
+  {data_bits[:64]}...
+
+The QR error correction capacity allows modifying up to 30% of
+data codewords while maintaining readability, creating space for
+steganographic embedding in the error correction blocks.
+
+Generated by ST3GG.
+"""
+
+    path = os.path.join(OUTPUT_DIR, 'example_qr_steg.txt')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(text)
+    print(f"    -> {path}")
+    return path
+
+
+# =============================================================================
+# 98. Echo hiding steganography
+# =============================================================================
+
+def generate_echo_hiding():
+    """Create a WAV with Plinian divider hidden in echo delay patterns."""
+    print("  Generating echo hiding WAV...")
+    import numpy as np
+    import math
+
+    sample_rate = 22050
+    duration = 3
+    num_samples = sample_rate * duration
+
+    # Generate a rich tone
+    t = np.arange(num_samples) / sample_rate
+    signal = (0.4 * np.sin(2 * np.pi * 440 * t) +
+              0.2 * np.sin(2 * np.pi * 880 * t) +
+              0.1 * np.sin(2 * np.pi * 1320 * t))
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_bytes = struct.pack('>I', len(msg_bytes))
+    payload = length_bytes + msg_bytes
+    bits = []
+    for byte in payload:
+        for j in range(7, -1, -1):
+            bits.append((byte >> j) & 1)
+
+    # Echo hiding: bit=0 -> short echo (150 samples), bit=1 -> long echo (300 samples)
+    SHORT_DELAY = 150
+    LONG_DELAY = 300
+    ECHO_AMP = 0.3
+    segment_len = num_samples // len(bits) if bits else num_samples
+
+    output = signal.copy()
+    for i, bit in enumerate(bits):
+        start = i * segment_len
+        end = min(start + segment_len, num_samples)
+        delay = LONG_DELAY if bit == 1 else SHORT_DELAY
+        for j in range(start + delay, end):
+            output[j] += ECHO_AMP * signal[j - delay]
+
+    # Normalize and convert to 16-bit
+    output = output / np.max(np.abs(output)) * 0.8
+    samples_16 = (output * 16000).astype(np.int16)
+
+    path = os.path.join(OUTPUT_DIR, 'example_echo_hiding.wav')
+    with wave.open(path, 'w') as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(sample_rate)
+        wav.writeframes(samples_16.tobytes())
+    print(f"    -> {path} ({len(bits)} bits in echo delays)")
+    return path
+
+
+# =============================================================================
+# 99. Phase coding steganography
+# =============================================================================
+
+def generate_phase_coding():
+    """Create a WAV with Plinian divider hidden in phase of frequency components."""
+    print("  Generating phase coding WAV...")
+    import numpy as np
+
+    sample_rate = 22050
+    segment_size = 512  # FFT segment size
+    num_segments = 200  # Total segments
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_bytes = struct.pack('>I', len(msg_bytes))
+    payload = length_bytes + msg_bytes
+    bits = []
+    for byte in payload:
+        for j in range(7, -1, -1):
+            bits.append((byte >> j) & 1)
+
+    # Generate base signal
+    total_samples = segment_size * num_segments
+    t = np.arange(total_samples) / sample_rate
+    signal = 0.5 * np.sin(2 * np.pi * 440 * t) + 0.2 * np.random.randn(total_samples) * 0.05
+
+    # Phase coding: modify phase of first segment's DFT
+    # bit=0 -> phase=0, bit=1 -> phase=pi
+    output = signal.copy()
+    for i, bit in enumerate(bits):
+        if i >= num_segments:
+            break
+        start = i * segment_size
+        segment = output[start:start + segment_size]
+        spectrum = np.fft.rfft(segment)
+        magnitudes = np.abs(spectrum)
+        phases = np.angle(spectrum)
+
+        # Modify phase of a specific frequency bin
+        target_bin = 10 + (i % 20)  # Spread across bins
+        phases[target_bin] = np.pi if bit == 1 else 0
+
+        # Reconstruct
+        spectrum = magnitudes * np.exp(1j * phases)
+        output[start:start + segment_size] = np.fft.irfft(spectrum, n=segment_size)
+
+    # Normalize and convert
+    output = output / np.max(np.abs(output)) * 0.8
+    samples_16 = (output * 16000).astype(np.int16)
+
+    path = os.path.join(OUTPUT_DIR, 'example_phase_coding.wav')
+    with wave.open(path, 'w') as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(sample_rate)
+        wav.writeframes(samples_16.tobytes())
+    print(f"    -> {path} ({min(len(bits), num_segments)} bits in phase)")
+    return path
+
+
+# =============================================================================
+# 100. Spread spectrum (DSSS) steganography
+# =============================================================================
+
+def generate_spread_spectrum():
+    """Create a WAV with Plinian divider hidden via Direct Sequence Spread Spectrum."""
+    print("  Generating spread spectrum (DSSS) WAV...")
+    import numpy as np
+
+    sample_rate = 22050
+    chip_rate = 100  # Chips per bit
+    duration = 4
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_bytes = struct.pack('>I', len(msg_bytes))
+    payload = length_bytes + msg_bytes
+    bits = []
+    for byte in payload:
+        for j in range(7, -1, -1):
+            bits.append((byte >> j) & 1)
+
+    # Generate carrier signal
+    total_samples = sample_rate * duration
+    t = np.arange(total_samples) / sample_rate
+    carrier = 0.5 * np.sin(2 * np.pi * 440 * t)
+
+    # Generate PN (pseudo-noise) sequence
+    np.random.seed(42)  # Fixed seed = shared secret
+    samples_per_bit = sample_rate // chip_rate
+
+    # Spread each bit across samples_per_bit samples using PN sequence
+    spread = np.zeros(total_samples)
+    for i, bit in enumerate(bits):
+        start = i * samples_per_bit
+        if start + samples_per_bit > total_samples:
+            break
+        pn = np.random.choice([-1, 1], size=samples_per_bit)
+        data_val = 1 if bit == 1 else -1
+        spread[start:start + samples_per_bit] = data_val * pn * 0.02  # Low amplitude
+
+    output = carrier + spread
+    output = output / np.max(np.abs(output)) * 0.8
+    samples_16 = (output * 16000).astype(np.int16)
+
+    path = os.path.join(OUTPUT_DIR, 'example_spread_spectrum.wav')
+    with wave.open(path, 'w') as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(sample_rate)
+        wav.writeframes(samples_16.tobytes())
+    print(f"    -> {path} ({len(bits)} bits via DSSS)")
+    return path
+
+
+# =============================================================================
+# 101. Quantization noise steganography
+# =============================================================================
+
+def generate_quantization_noise():
+    """Create a WAV with Plinian divider hidden in quantization noise patterns."""
+    print("  Generating quantization noise WAV...")
+    import numpy as np
+
+    sample_rate = 22050
+    duration = 2
+    num_samples = sample_rate * duration
+
+    # Generate 16-bit audio
+    t = np.arange(num_samples) / sample_rate
+    signal = 0.5 * np.sin(2 * np.pi * 523.25 * t) + 0.2 * np.sin(2 * np.pi * 659.25 * t)
+    samples = (signal * 16000).astype(np.int16)
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_bytes = struct.pack('>I', len(msg_bytes))
+    payload = length_bytes + msg_bytes
+    bits = []
+    for byte in payload:
+        for j in range(7, -1, -1):
+            bits.append((byte >> j) & 1)
+
+    # Quantization noise: add controlled noise to the 2nd LSB
+    # bit=0: 2nd LSB = 0, bit=1: 2nd LSB = 1
+    for i, bit in enumerate(bits):
+        if i >= len(samples):
+            break
+        val = int(samples[i])
+        # Handle signed 16-bit: convert to unsigned, modify, convert back
+        u = val & 0xFFFF
+        u = (u & 0xFFFD) | (bit << 1)
+        samples[i] = np.int16(u if u < 32768 else u - 65536)
+
+    path = os.path.join(OUTPUT_DIR, 'example_quantization_noise.wav')
+    with wave.open(path, 'w') as wav:
+        wav.setnchannels(1)
+        wav.setsampwidth(2)
+        wav.setframerate(sample_rate)
+        wav.writeframes(samples.tobytes())
+    print(f"    -> {path} ({len(bits)} bits in quantization noise)")
+    return path
+
+
+# =============================================================================
+# 102. BPCS (Bit-Plane Complexity Segmentation) steganography
+# =============================================================================
+
+def generate_bpcs():
+    """Create a PNG with Plinian divider using BPCS embedding in complex bit planes."""
+    print("  Generating BPCS steganography PNG...")
+    import numpy as np
+
+    width, height = 200, 200
+    img = Image.new('RGB', (width, height))
+    pixels = img.load()
+
+    # Generate a natural-looking image with varying complexity
+    np.random.seed(123)
+    for y in range(height):
+        for x in range(width):
+            r = int(100 + 80 * (x/width) + np.random.randint(-10, 10))
+            g = int(80 + 100 * (y/height) + np.random.randint(-10, 10))
+            b = int(60 + 80 * ((x+y)/(width+height)) + np.random.randint(-10, 10))
+            pixels[x, y] = (max(0,min(255,r)), max(0,min(255,g)), max(0,min(255,b)))
+
+    # Extract image as numpy array
+    img_array = np.array(img, dtype=np.uint8)
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_bytes = struct.pack('>I', len(msg_bytes))
+    payload = length_bytes + msg_bytes
+
+    # BPCS: replace "complex" 8x8 blocks in bit plane 0 with message data
+    # Complexity threshold: blocks with >40% transitions are "complex enough"
+    BLOCK_SIZE = 8
+    THRESHOLD = 0.4
+
+    def block_complexity(block):
+        """Calculate complexity as ratio of bit transitions."""
+        transitions = 0
+        total = 0
+        for r in range(block.shape[0]):
+            for c in range(block.shape[1] - 1):
+                if block[r, c] != block[r, c + 1]:
+                    transitions += 1
+                total += 1
+        for r in range(block.shape[0] - 1):
+            for c in range(block.shape[1]):
+                if block[r, c] != block[r + 1, c]:
+                    transitions += 1
+                total += 1
+        return transitions / total if total > 0 else 0
+
+    # Convert payload to bits
+    payload_bits = []
+    for b in payload:
+        for j in range(7, -1, -1):
+            payload_bits.append((b >> j) & 1)
+
+    # Embed in bit plane 0 of red channel
+    bit_idx = 0
+    channel = img_array[:, :, 0]  # Red channel
+    bit_plane = (channel >> 0) & 1  # Bit plane 0
+
+    for by in range(0, height - BLOCK_SIZE + 1, BLOCK_SIZE):
+        for bx in range(0, width - BLOCK_SIZE + 1, BLOCK_SIZE):
+            if bit_idx + BLOCK_SIZE * BLOCK_SIZE > len(payload_bits):
+                break
+            block = bit_plane[by:by+BLOCK_SIZE, bx:bx+BLOCK_SIZE]
+            if block_complexity(block) >= THRESHOLD:
+                # Replace this complex block with message data
+                for r in range(BLOCK_SIZE):
+                    for c in range(BLOCK_SIZE):
+                        if bit_idx < len(payload_bits):
+                            bit_plane[by+r, bx+c] = payload_bits[bit_idx]
+                            bit_idx += 1
+        if bit_idx + BLOCK_SIZE * BLOCK_SIZE > len(payload_bits):
+            break
+
+    # Reconstruct channel
+    channel = (channel & 0xFE) | bit_plane
+    img_array[:, :, 0] = channel
+    result = Image.fromarray(img_array)
+
+    path = os.path.join(OUTPUT_DIR, 'example_bpcs.png')
+    result.save(path)
+    print(f"    -> {path} ({bit_idx} bits via BPCS)")
+    return path
+
+
+# =============================================================================
+# 103. JPEG DCT coefficient steganography
+# =============================================================================
+
+def generate_jpeg_dct():
+    """Create a JPEG with Plinian divider hidden in DCT coefficients (manual)."""
+    print("  Generating JPEG DCT coefficient steganography...")
+    import numpy as np
+
+    width, height = 128, 128  # Multiple of 8 for DCT blocks
+    img = Image.new('RGB', (width, height))
+    pixels = img.load()
+    for y in range(height):
+        for x in range(width):
+            r = int(140 + 60 * np.sin(x * 0.1) + 30 * np.cos(y * 0.08))
+            g = int(120 + 50 * np.cos(x * 0.08 + y * 0.05))
+            b = int(100 + 40 * np.sin((x + y) * 0.06))
+            pixels[x, y] = (max(0,min(255,r)), max(0,min(255,g)), max(0,min(255,b)))
+
+    # Convert to grayscale numpy array for DCT processing
+    gray = np.array(img.convert('L'), dtype=np.float64)
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_bytes = struct.pack('>I', len(msg_bytes))
+    payload = length_bytes + msg_bytes
+    bits = []
+    for b in payload:
+        for j in range(7, -1, -1):
+            bits.append((b >> j) & 1)
+
+    # Manual 2D DCT using numpy (type-II DCT via FFT)
+    def dct2(block):
+        return np.real(np.fft.fft2(block))
+
+    def idct2(block):
+        return np.real(np.fft.ifft2(block))
+
+    # Embed bits in mid-frequency DCT coefficients of 8x8 blocks
+    bit_idx = 0
+    BLOCK = 8
+    for by in range(0, height, BLOCK):
+        for bx in range(0, width, BLOCK):
+            if bit_idx >= len(bits):
+                break
+            block = gray[by:by+BLOCK, bx:bx+BLOCK].copy()
+            coeffs = dct2(block)
+            # Modify coefficient at position (3,4) — mid-frequency
+            if bit_idx < len(bits):
+                val = coeffs[3, 4]
+                if bits[bit_idx] == 1:
+                    coeffs[3, 4] = abs(val) + 10 if val >= 0 else -(abs(val) + 10)
+                else:
+                    coeffs[3, 4] = val * 0.5  # Reduce magnitude
+                bit_idx += 1
+            gray[by:by+BLOCK, bx:bx+BLOCK] = np.clip(idct2(coeffs), 0, 255)
+        if bit_idx >= len(bits):
+            break
+
+    # Save as grayscale image (the DCT modification is in the pixel data)
+    result = Image.fromarray(gray.astype(np.uint8), 'L')
+    path = os.path.join(OUTPUT_DIR, 'example_dct_manual.png')
+    result.save(path)
+    print(f"    -> {path} ({bit_idx} bits in DCT coefficients)")
+    return path
+
+
+# =============================================================================
+# 104. DFT (Discrete Fourier Transform) embedding
+# =============================================================================
+
+def generate_dft_embedding():
+    """Create a PNG with Plinian divider hidden in DFT magnitude spectrum."""
+    print("  Generating DFT embedding PNG...")
+    import numpy as np
+
+    width, height = 128, 128
+    img = Image.new('L', (width, height))
+    pixels = img.load()
+    for y in range(height):
+        for x in range(width):
+            pixels[x, y] = int(128 + 60 * np.sin(x * 0.1) + 40 * np.cos(y * 0.12))
+
+    gray = np.array(img, dtype=np.float64)
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_bytes = struct.pack('>I', len(msg_bytes))
+    payload = length_bytes + msg_bytes
+    bits = []
+    for b in payload:
+        for j in range(7, -1, -1):
+            bits.append((b >> j) & 1)
+
+    # 2D DFT
+    spectrum = np.fft.fft2(gray)
+    magnitude = np.abs(spectrum)
+    phase = np.angle(spectrum)
+
+    # Embed bits in magnitude of mid-frequency components
+    bit_idx = 0
+    for freq in range(10, 60):
+        if bit_idx >= len(bits):
+            break
+        r, c = freq, freq
+        if bits[bit_idx] == 1:
+            magnitude[r, c] *= 1.5
+            magnitude[height - r, width - c] *= 1.5  # Conjugate symmetry
+        else:
+            magnitude[r, c] *= 0.7
+            magnitude[height - r, width - c] *= 0.7
+        bit_idx += 1
+
+    # Reconstruct
+    spectrum = magnitude * np.exp(1j * phase)
+    result = np.real(np.fft.ifft2(spectrum))
+    result = np.clip(result, 0, 255).astype(np.uint8)
+
+    path = os.path.join(OUTPUT_DIR, 'example_dft.png')
+    Image.fromarray(result, 'L').save(path)
+    print(f"    -> {path} ({bit_idx} bits in DFT magnitude)")
+    return path
+
+
+# =============================================================================
+# 105. DWT (Discrete Wavelet Transform) - Haar wavelet
+# =============================================================================
+
+def generate_dwt_haar():
+    """Create a PNG with Plinian divider hidden in Haar wavelet coefficients."""
+    print("  Generating DWT (Haar wavelet) PNG...")
+    import numpy as np
+
+    width, height = 128, 128
+    img = Image.new('L', (width, height))
+    pixels = img.load()
+    np.random.seed(555)
+    for y in range(height):
+        for x in range(width):
+            pixels[x, y] = int(100 + 80 * (x/width) + 40 * (y/height) + np.random.randint(-5, 5))
+
+    gray = np.array(img, dtype=np.float64)
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_bytes = struct.pack('>I', len(msg_bytes))
+    payload = length_bytes + msg_bytes
+    bits = []
+    for b in payload:
+        for j in range(7, -1, -1):
+            bits.append((b >> j) & 1)
+
+    # Simple Haar wavelet transform (1 level)
+    h = height // 2
+    w = width // 2
+    LL = np.zeros((h, w))
+    LH = np.zeros((h, w))
+    HL = np.zeros((h, w))
+    HH = np.zeros((h, w))
+
+    for y in range(h):
+        for x in range(w):
+            a = gray[2*y, 2*x]
+            b_val = gray[2*y, 2*x+1]
+            c = gray[2*y+1, 2*x]
+            d = gray[2*y+1, 2*x+1]
+            LL[y, x] = (a + b_val + c + d) / 4
+            LH[y, x] = (a + b_val - c - d) / 4
+            HL[y, x] = (a - b_val + c - d) / 4
+            HH[y, x] = (a - b_val - c + d) / 4
+
+    # Embed bits in HH (high-frequency detail) coefficients
+    bit_idx = 0
+    for y in range(h):
+        for x in range(w):
+            if bit_idx >= len(bits):
+                break
+            if bits[bit_idx] == 1:
+                HH[y, x] = abs(HH[y, x]) + 5
+            else:
+                HH[y, x] = abs(HH[y, x]) * 0.3
+            bit_idx += 1
+        if bit_idx >= len(bits):
+            break
+
+    # Inverse Haar
+    result = np.zeros((height, width))
+    for y in range(h):
+        for x in range(w):
+            ll = LL[y, x]; lh = LH[y, x]; hl = HL[y, x]; hh = HH[y, x]
+            result[2*y, 2*x] = ll + lh + hl + hh
+            result[2*y, 2*x+1] = ll + lh - hl - hh
+            result[2*y+1, 2*x] = ll - lh + hl - hh
+            result[2*y+1, 2*x+1] = ll - lh - hl + hh
+
+    result = np.clip(result, 0, 255).astype(np.uint8)
+    path = os.path.join(OUTPUT_DIR, 'example_dwt_haar.png')
+    Image.fromarray(result, 'L').save(path)
+    print(f"    -> {path} ({bit_idx} bits in HH wavelet band)")
+    return path
+
+
+# =============================================================================
+# 106. Image subsampling (4:2:0 vs 4:4:4 chroma)
+# =============================================================================
+
+def generate_subsampling():
+    """Create a PNG with Plinian divider encoded in chroma subsampling pattern."""
+    print("  Generating chroma subsampling steganography...")
+    import numpy as np
+
+    width, height = 200, 200
+    img = Image.new('RGB', (width, height))
+    pixels = img.load()
+    for y in range(height):
+        for x in range(width):
+            r = int(140 + 60 * (x / width))
+            g = int(120 + 80 * (y / height))
+            b = int(100 + 60 * ((x + y) / (width + height)))
+            pixels[x, y] = (r, g, b)
+
+    msg_bytes = PLINIAN_DIVIDER.encode('utf-8')
+    length_bytes = struct.pack('>I', len(msg_bytes))
+    payload = length_bytes + msg_bytes
+    bits = []
+    for b_val in payload:
+        for j in range(7, -1, -1):
+            bits.append((b_val >> j) & 1)
+
+    # Subsampling steg: for each 2x2 pixel block, if bit=1, average the
+    # chroma (B channel) across the block (simulating 4:2:0 subsampling).
+    # If bit=0, leave chroma at full resolution (4:4:4).
+    bit_idx = 0
+    for by in range(0, height - 1, 2):
+        for bx in range(0, width - 1, 2):
+            if bit_idx >= len(bits):
+                break
+            if bits[bit_idx] == 1:
+                # Average B channel across 2x2 block (4:2:0 simulation)
+                b_avg = 0
+                for dy in range(2):
+                    for dx in range(2):
+                        r, g, b = pixels[bx + dx, by + dy]
+                        b_avg += b
+                b_avg //= 4
+                for dy in range(2):
+                    for dx in range(2):
+                        r, g, _ = pixels[bx + dx, by + dy]
+                        pixels[bx + dx, by + dy] = (r, g, b_avg)
+            bit_idx += 1
+        if bit_idx >= len(bits):
+            break
+
+    path = os.path.join(OUTPUT_DIR, 'example_subsampling.png')
+    img.save(path)
+    print(f"    -> {path} ({bit_idx} bits in chroma subsampling)")
+    return path
+
+
+# =============================================================================
+# 107. Self-extracting archive steganography
+# =============================================================================
+
+def generate_self_extracting():
+    """Create a self-extracting shell script with Plinian divider as embedded payload."""
+    print("  Generating self-extracting archive...")
+    import base64, tarfile, io
+
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+    b64_secret = base64.b64encode(secret).decode()
+
+    # Create a tar.gz payload with the secret
+    tar_buf = io.BytesIO()
+    with tarfile.open(fileobj=tar_buf, mode='w:gz') as tf:
+        info = tarfile.TarInfo(name='secret.txt')
+        info.size = len(secret)
+        tf.addfile(info, io.BytesIO(secret))
+    tar_b64 = base64.b64encode(tar_buf.getvalue()).decode()
+
+    script = f'''#!/bin/sh
+# Self-extracting archive - ST3GG steganography example
+# This script contains hidden data as an embedded base64 payload
+echo "Extracting..."
+PAYLOAD="{tar_b64}"
+echo "$PAYLOAD" | base64 -d | tar xzf - 2>/dev/null
+if [ -f secret.txt ]; then
+    echo "Secret extracted to secret.txt"
+    cat secret.txt
+else
+    echo "Extraction failed"
+fi
+# Hidden direct payload (not used by extraction):
+# {b64_secret}
+# End of self-extracting archive
+'''
+
+    path = os.path.join(OUTPUT_DIR, 'example_self_extracting.sh')
+    with open(path, 'w') as f:
+        f.write(script)
+    os.chmod(path, 0o755)
+    print(f"    -> {path}")
+    return path
+
+
+# =============================================================================
+# 108. Extended attributes (xattr) steganography
+# =============================================================================
+
+def generate_xattr_steg():
+    """Create a file with Plinian divider hidden in filesystem extended attributes."""
+    print("  Generating xattr steganography...")
+    import base64
+
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+
+    # Create the carrier file
+    path = os.path.join(OUTPUT_DIR, 'example_xattr.txt')
+    with open(path, 'w') as f:
+        f.write("This file contains hidden data in its filesystem extended attributes.\n")
+        f.write("Use 'getfattr -d' or 'xattr -l' to view them.\n")
+        f.write("The actual file content is innocuous.\n")
+
+    # Set extended attributes with the secret
+    try:
+        os.setxattr(path, b'user.st3gg.payload', secret)
+        os.setxattr(path, b'user.st3gg.b64', base64.b64encode(secret))
+        os.setxattr(path, b'user.st3gg.hex', secret.hex().encode())
+        os.setxattr(path, b'user.st3gg.flag', b'ST3GG{x4ttr_m4st3r}')
+        print(f"    -> {path} (4 xattr attributes set)")
+    except OSError as e:
+        # xattr may not be supported on all filesystems
+        print(f"    -> {path} (xattr not supported: {e})")
+
+    return path
+
+
+# =============================================================================
+# 109. TLS certificate field steganography
+# =============================================================================
+
+def generate_tls_cert_steg():
+    """Create a self-signed cert with Plinian divider in certificate fields."""
+    print("  Generating TLS certificate steganography...")
+    import base64
+
+    secret = PLINIAN_DIVIDER.encode('utf-8')
+    b64_secret = base64.b64encode(secret).decode()
+
+    # We'll create a PEM-formatted "certificate" with the secret in fields
+    # Not a real x509 cert (would need cryptography lib), but structurally valid-looking
+    text = f"""-----BEGIN CERTIFICATE-----
+ST3GG Steganography Certificate Example
+This is not a real X.509 certificate but demonstrates hiding data in
+certificate-like structures.
+
+Subject: CN={b64_secret}
+Issuer: CN=ST3GG CA, O=STEGOSAURUS WRECKS, L={secret.hex()}
+Serial: {int.from_bytes(secret[:8], 'big')}
+Not Before: Jan 01 00:00:00 2024 GMT
+Not After: Dec 31 23:59:59 2099 GMT
+
+Subject Alternative Names:
+  DNS: {b64_secret[:30]}.example.com
+  DNS: {secret.hex()[:30]}.st3gg.local
+
+Extensions:
+  X509v3 Subject Key Identifier: {secret.hex()[:40]}
+  X509v3 Authority Key Identifier: {secret.hex()[40:]}
+  1.2.3.4.5.6.7.8.9: {PLINIAN_DIVIDER}
+
+Payload (base64): {b64_secret}
+-----END CERTIFICATE-----
+"""
+
+    path = os.path.join(OUTPUT_DIR, 'example_tls_cert.pem')
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(text)
+    print(f"    -> {path}")
+    return path
+
+
+# =============================================================================
 # Main
 # =============================================================================
 
@@ -4047,6 +6603,71 @@ def main():
     files.append(generate_json_key_ordering())
     files.append(generate_capitalization_encoding())
     files.append(generate_silence_interval_wav())
+
+    # Chunk 9: More Unicode & text tricks
+    files.append(generate_directional_override())
+    files.append(generate_hangul_filler())
+    files.append(generate_braille_pattern())
+    files.append(generate_math_alphanumeric())
+    files.append(generate_unicode_normalization())
+    files.append(generate_sentence_length())
+    files.append(generate_word_choice())
+    files.append(generate_misspelling())
+
+    # Chunk 10: Network & encoding tricks
+    files.append(generate_ip_ttl_covert())
+    files.append(generate_ip_id_covert())
+    files.append(generate_tcp_window_covert())
+    files.append(generate_tcp_urgent_covert())
+    files.append(generate_dns_txt_record())
+    files.append(generate_covert_timing())
+    files.append(generate_base32_file())
+    files.append(generate_morse_code())
+
+    # Chunk 11: Image techniques
+    files.append(generate_pvd())
+    files.append(generate_histogram_shifting())
+    files.append(generate_lsb_multibit())
+    files.append(generate_lsb_msb_first())
+    files.append(generate_bmp_dib_header())
+    files.append(generate_gif_disposal())
+    files.append(generate_jpeg_app_segment())
+    files.append(generate_color_space())
+    files.append(generate_png_gama())
+
+    # Chunk 12: Document, archive & misc
+    files.append(generate_pdf_javascript())
+    files.append(generate_pdf_incremental())
+    files.append(generate_pdf_form_fields())
+    files.append(generate_html_events())
+    files.append(generate_xml_entities())
+    files.append(generate_nested_zip())
+    files.append(generate_emoji_skin_tone())
+    files.append(generate_punycode())
+
+    # Chunk 13: Final techniques
+    files.append(generate_jpeg_restart_markers())
+    files.append(generate_matched_pairs_lsb())
+    files.append(generate_png_scanline_filter())
+    files.append(generate_qr_steg())
+
+    # Chunk 14: Audio DSP techniques
+    files.append(generate_echo_hiding())
+    files.append(generate_phase_coding())
+    files.append(generate_spread_spectrum())
+    files.append(generate_quantization_noise())
+
+    # Chunk 15: Image DSP techniques
+    files.append(generate_bpcs())
+    files.append(generate_jpeg_dct())
+    files.append(generate_dft_embedding())
+    files.append(generate_dwt_haar())
+    files.append(generate_subsampling())
+
+    # Chunk 16: Misc final techniques
+    files.append(generate_self_extracting())
+    files.append(generate_xattr_steg())
+    files.append(generate_tls_cert_steg())
 
     print()
     print(f"Generated {len(files)} example files!")

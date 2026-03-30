@@ -120,6 +120,68 @@ All new examples (Plinian divider series) encode the secret message:
 | `example_capitalization.txt` | Letter case encoding | Plinian divider in word-initial capitalization (lower=0, upper=1) |
 | `example_silence_interval.wav` | Audio silence timing | Plinian divider in silence gap durations (short=0, long=1) |
 
+## More Unicode & Text Tricks (Plinian Divider)
+
+| File | Technique | What's Hidden |
+|------|-----------|---------------|
+| `example_directional_override.txt` | Bidi overrides (RLO/LRO) | Plinian divider in directional control chars with PDF cancellation |
+| `example_hangul_filler.txt` | Hangul filler (U+3164) | Plinian divider in Korean invisible filler vs regular space |
+| `example_braille.txt` | Braille patterns (U+2800) | Plinian divider bytes mapped to Braille Unicode block |
+| `example_math_alphanumeric.txt` | Math bold (U+1D400) | Plinian divider in normal vs mathematical bold letter substitution |
+| `example_normalization.txt` | NFC vs NFD | Plinian divider in Unicode normalization form choice per word |
+| `example_sentence_length.txt` | Sentence word count | Plinian divider in odd (=1) vs even (=0) word count sentences |
+| `example_word_choice.txt` | Synonym substitution | Plinian divider in synonym A (=0) vs synonym B (=1) selection |
+| `example_misspelling.txt` | Typo patterns | Plinian divider in correct (=0) vs deliberately misspelled (=1) words |
+
+## More Network Protocol Steganography (Plinian Divider)
+
+| File | Technique | What's Hidden |
+|------|-----------|---------------|
+| `example_ttl_covert.pcap` | IP TTL covert channel | Plinian divider bytes encoded directly in IP TTL field values |
+| `example_ipid_covert.pcap` | IP ID field encoding | Plinian divider 2 bytes per packet in IP Identification field |
+| `example_tcp_window.pcap` | TCP window size | Plinian divider 2 bytes per packet in TCP window size field |
+| `example_tcp_urgent.pcap` | TCP urgent pointer | Plinian divider in TCP URG pointer with URG flag set |
+| `example_dns_txt.pcap` | DNS TXT record | Plinian divider base64-encoded in DNS TXT response record |
+| `example_covert_timing.pcap` | Covert timing channel | Plinian divider in inter-packet delays (10ms=0, 50ms=1) |
+| `example_multibase.txt` | Multi-base encoding | Plinian divider in base16, base32, base64, and base85 |
+| `example_morse.txt` | Morse code | Plinian divider encoded in dot-dash Morse alphabet |
+
+## Advanced Image Techniques (Plinian Divider)
+
+| File | Technique | What's Hidden |
+|------|-----------|---------------|
+| `example_pvd.png` | Pixel Value Differencing | Plinian divider in adjacent pixel pair difference parity |
+| `example_histogram_shift.png` | Histogram shifting | Plinian divider via peak pixel value shifting (peak=0, peak+1=1) |
+| `example_lsb_4bit.png` | LSB 4-bit per channel | Plinian divider using 4 lower bits per channel (high capacity) |
+| `example_lsb_msb_first.png` | LSB MSB-first ordering | Plinian divider with reversed bit extraction order per byte |
+| `example_bmp_dib.bmp` | BMP DIB header fields | Plinian divider in reserved header bytes + trailing data |
+| `example_gif_disposal.gif` | GIF disposal method | Plinian divider in frame disposal flag bits |
+| `example_jpeg_app.jpg` | JPEG APP segment | Plinian divider in custom APP14 segment (ST3GG identifier) |
+| `example_ycbcr.png` | YCbCr color space | Plinian divider in Cb chrominance channel LSB after RGB conversion |
+| `example_png_chunks_custom.png` | PNG custom chunks | Plinian divider in private stEg/sT3g ancillary PNG chunks |
+
+## More Document & Archive Techniques (Plinian Divider)
+
+| File | Technique | What's Hidden |
+|------|-----------|---------------|
+| `example_pdf_javascript.pdf` | PDF JavaScript | Plinian divider base64 in OpenAction JavaScript |
+| `example_pdf_incremental.pdf` | PDF incremental update | Plinian divider in appended incremental update annotation |
+| `example_pdf_forms.pdf` | PDF form fields | Plinian divider in hidden form field default values |
+| `example_html_events.html` | HTML event handlers | Plinian divider in onclick, onload, onmouseover attributes |
+| `example_xml_entities.xml` | XML entity declarations | Plinian divider in DOCTYPE entity definitions + per-byte entities |
+| `example_nested.zip` | Nested ZIP archive | Plinian divider in inner ZIP comment + secret.txt inside ZIP-in-ZIP |
+| `example_emoji_skin_tone.txt` | Emoji skin tone selectors | Plinian divider in skin tone modifier choice (4 tones = 2 bits) |
+| `example_punycode.txt` | Punycode/IDN domains | Plinian divider bytes encoded as internationalized domain names |
+
+## Final Techniques (Plinian Divider)
+
+| File | Technique | What's Hidden |
+|------|-----------|---------------|
+| `example_jpeg_restart.jpg` | JPEG restart markers + COM | Plinian divider in RST marker indices + COM comment segment |
+| `example_matched_pairs.png` | Matched pairs LSB | Plinian divider in pixel pair ordering (left>right=1, left<=right=0) |
+| `example_scanline_filter.png` | PNG scanline filter abuse | Plinian divider in per-row filter byte choice (None=0, Sub=1) |
+| `example_qr_steg.txt` | QR code data encoding | Plinian divider in QR data bit pattern + error correction analysis |
+
 ## Regenerating Files
 
 If you want to modify the hidden messages or create new samples:
