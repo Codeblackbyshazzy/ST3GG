@@ -10,12 +10,22 @@ from typing import Tuple, Optional
 from dataclasses import dataclass
 
 # Try to import cryptography library, fall back to basic XOR if not available
+HAS_CRYPTO = False
 try:
-    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-    from cryptography.hazmat.primitives import padding
-    from cryptography.hazmat.backends import default_backend
-    HAS_CRYPTO = True
-except ImportError:
+    # Pre-check: verify cryptography's native bindings work.
+    # Some systems have a broken cryptography install where the Rust
+    # bindings crash with a pyo3 panic that Python can't catch.
+    import subprocess as _sp
+    _probe = _sp.run(
+        ['python3', '-c', 'from cryptography.exceptions import InvalidSignature'],
+        capture_output=True, timeout=5
+    )
+    if _probe.returncode == 0:
+        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+        from cryptography.hazmat.primitives import padding
+        from cryptography.hazmat.backends import default_backend
+        HAS_CRYPTO = True
+except Exception:
     HAS_CRYPTO = False
 
 
@@ -44,7 +54,7 @@ def derive_key(password: str, salt: bytes, key_length: int = 32) -> bytes:
         'sha256',
         password.encode('utf-8'),
         salt,
-        iterations=100000,
+        iterations=600000,
         dklen=key_length
     )
 

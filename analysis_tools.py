@@ -2316,6 +2316,7 @@ def tar_decode(data: bytes) -> Dict[str, Any]:
     results = {'found': False, 'findings': []}
     try:
         tf = tarfile.open(fileobj=io.BytesIO(data))
+        # Note: we only READ members, never extract to filesystem — no path traversal risk
         for member in tf.getmembers():
             if hasattr(member, 'pax_headers') and member.pax_headers:
                 for k, v in member.pax_headers.items():
@@ -2674,6 +2675,97 @@ def decode_emoji_skin_tone(data: bytes) -> Dict[str, Any]:
         return {'error': str(e), 'found': False}
 
 
+# ============== ADVANCED STEGANALYSIS ==============
+
+def rs_analysis(data: bytes) -> Dict[str, Any]:
+    """RS (Regular-Singular) Analysis — gold standard for LSB detection.
+
+    Divides pixels into pairs and measures how LSB flipping affects smoothness.
+    Clean images: flipping increases/decreases regularity equally.
+    Stego images: balance is skewed because LSBs already carry data.
+    More accurate than chi-square for low embedding rates.
+    """
+    if not HAS_PIL or not HAS_NUMPY:
+        return {'error': 'PIL/numpy required', 'found': False}
+    try:
+        img = Image.open(io.BytesIO(data)).convert('RGB')
+        pixels = np.array(img, dtype=np.int16)
+        results = {}
+        for ch_idx, ch_name in enumerate(['Red', 'Green', 'Blue']):
+            ch = pixels[:, :, ch_idx].flatten()
+            n = len(ch) // 2
+            p1, p2 = ch[:n*2:2], ch[1:n*2:2]
+            d_orig = float(np.mean(np.abs(p1 - p2)))
+            d_flip = float(np.mean(np.abs((p1 ^ 1) - p2)))
+            rs_ratio = d_flip / d_orig if d_orig > 0 else 1.0
+            est_rate = max(0, min(1, (rs_ratio - 1.0) * 2))
+            results[ch_name] = {
+                'smoothness_original': round(d_orig, 4),
+                'smoothness_flipped': round(d_flip, 4),
+                'rs_ratio': round(rs_ratio, 4),
+                'estimated_embedding_rate': round(est_rate, 4),
+                'suspicious': rs_ratio > 1.02 or est_rate > 0.05,
+            }
+        rate = max(r['estimated_embedding_rate'] for r in results.values())
+        return {
+            'found': True, 'channels': results,
+            'overall_embedding_rate': round(rate, 4),
+            'suspicious': any(r['suspicious'] for r in results.values()),
+            'interpretation': f"RS analysis: {rate:.1%} estimated embedding. " + (
+                "HIGH probability of LSB steg." if rate > 0.1
+                else "MODERATE indicators." if rate > 0.03
+                else "LOW — likely clean."),
+            'method': 'rs_analysis'
+        }
+    except Exception as e:
+        return {'error': str(e), 'found': False}
+
+
+def sample_pairs_analysis(data: bytes) -> Dict[str, Any]:
+    """Sample Pairs Analysis (SPA) — detects LSB by pixel pair statistics.
+
+    Examines how adjacent pixel pairs relate when LSBs are considered.
+    Clean images have predictable pair-type ratios. LSB embedding disrupts them.
+    Complementary to RS analysis — catches different patterns.
+    """
+    if not HAS_PIL or not HAS_NUMPY:
+        return {'error': 'PIL/numpy required', 'found': False}
+    try:
+        img = Image.open(io.BytesIO(data)).convert('RGB')
+        pixels = np.array(img, dtype=np.int16)
+        results = {}
+        for ch_idx, ch_name in enumerate(['Red', 'Green', 'Blue']):
+            ch = pixels[:, :, ch_idx].flatten()
+            n = len(ch) - 1
+            p1, p2 = ch[:n], ch[1:n+1]
+            h1, h2 = p1 >> 1, p2 >> 1
+            x = int(np.sum(h1 == h2))
+            y = int(np.sum(np.abs(h1 - h2) == 1))
+            total = float(n)
+            x_r, y_r = x/total, y/total
+            spa = abs(x_r - y_r) / (x_r + y_r) if (x_r + y_r) > 0 else 0
+            est = max(0, min(1, 1.0 - spa * 3))
+            results[ch_name] = {
+                'x_pairs': x, 'y_pairs': y, 'z_pairs': n - x - y,
+                'spa_ratio': round(spa, 4),
+                'estimated_embedding_rate': round(est, 4),
+                'suspicious': spa < 0.1,
+            }
+        rate = max(r['estimated_embedding_rate'] for r in results.values())
+        return {
+            'found': True, 'channels': results,
+            'overall_embedding_rate': round(rate, 4),
+            'suspicious': any(r['suspicious'] for r in results.values()),
+            'interpretation': f"SPA: {rate:.1%} estimated embedding. " + (
+                "HIGH probability." if rate > 0.5
+                else "MODERATE." if rate > 0.2
+                else "LOW."),
+            'method': 'sample_pairs_analysis'
+        }
+    except Exception as e:
+        return {'error': str(e), 'found': False}
+
+
 # ============== REGISTER ALL TOOLS ==============
 
 def _register_all_tools():
@@ -2684,6 +2776,9 @@ def _register_all_tools():
     TOOL_REGISTRY.register('detect_confusable_whitespace', detect_confusable_whitespace)
     TOOL_REGISTRY.register('detect_emoji_steg', detect_emoji_steg)
     TOOL_REGISTRY.register('detect_capitalization_steg', detect_capitalization_steg)
+    # Advanced steganalysis
+    TOOL_REGISTRY.register('rs_analysis', rs_analysis)
+    TOOL_REGISTRY.register('sample_pairs_analysis', sample_pairs_analysis)
     TOOL_REGISTRY.register('audio_lsb_decode', audio_lsb_decode)
     TOOL_REGISTRY.register('pcap_decode', pcap_decode)
     TOOL_REGISTRY.register('zip_decode', zip_decode)

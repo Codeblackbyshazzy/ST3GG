@@ -36,7 +36,13 @@ from steg_core import (
     encode, decode, create_config, calculate_capacity, analyze_image,
     detect_encoding, CHANNEL_PRESETS, EncodingStrategy
 )
-from crypto import encrypt, decrypt, get_available_methods, crypto_status
+try:
+    from crypto import encrypt, decrypt, get_available_methods, crypto_status
+except Exception:
+    # Gracefully handle broken cryptography library (e.g., broken system install)
+    encrypt = decrypt = None
+    def get_available_methods(): return ["none", "xor"]
+    def crypto_status(): return "⚠ crypto module unavailable (install cryptography package)"
 from injector import (
     generate_injection_filename, get_template_names,
     get_jailbreak_template, get_jailbreak_names,

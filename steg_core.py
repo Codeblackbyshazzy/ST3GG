@@ -134,6 +134,18 @@ def get_channel_preset(name: str) -> List[Channel]:
     return CHANNEL_PRESETS.get(name.upper(), [Channel.R, Channel.G, Channel.B])
 
 
+def derive_magic(password: str) -> bytes:
+    """Derive 4-byte magic from password using HMAC-SHA256.
+
+    When a password is provided, the STEG header magic is derived from
+    the password instead of using the fixed 'STEG' bytes. This means
+    the header is undetectable without the password — no fixed signature
+    to scan for.
+    """
+    import hmac
+    return hmac.new(password.encode('utf-8'), b'ST3GG-MAGIC-V3', 'sha256').digest()[:4]
+
+
 # ============== HEADER FORMAT ==============
 """
 Header Format (32 bytes):
@@ -160,12 +172,16 @@ class StegHeader:
     original_length: int = 0
     crc32: int = 0
 
-    def to_bytes(self) -> bytes:
-        """Serialize header to 32 bytes"""
+    def to_bytes(self, password: Optional[str] = None) -> bytes:
+        """Serialize header to 32 bytes.
+
+        If password is provided, the magic bytes are derived from the password
+        using HMAC-SHA256, making the header undetectable without the password.
+        """
         config_bytes = self.config.to_bytes()
 
         header = bytearray(HEADER_SIZE)
-        header[0:4] = MAGIC_BYTES
+        header[0:4] = derive_magic(password) if password else MAGIC_BYTES
         header[4] = self.version
         header[5:13] = config_bytes
         struct.pack_into('>I', header, 16, self.payload_length)
@@ -175,14 +191,19 @@ class StegHeader:
         return bytes(header)
 
     @classmethod
-    def from_bytes(cls, data: bytes) -> 'StegHeader':
-        """Deserialize header from bytes"""
+    def from_bytes(cls, data: bytes, password: Optional[str] = None) -> 'StegHeader':
+        """Deserialize header from bytes.
+
+        If password is provided, validates against password-derived magic.
+        Otherwise validates against the fixed 'STEG' magic bytes.
+        """
         if len(data) < HEADER_SIZE:
             raise ValueError(f"Header too short: {len(data)} < {HEADER_SIZE}")
 
         magic = data[0:4]
-        if magic != MAGIC_BYTES:
-            raise ValueError(f"Invalid magic bytes: {magic!r} != {MAGIC_BYTES!r}")
+        expected = derive_magic(password) if password else MAGIC_BYTES
+        if magic != expected:
+            raise ValueError(f"Invalid magic bytes: {magic!r} != {expected!r}")
 
         version = data[4]
         if version > FORMAT_VERSION:
@@ -547,10 +568,20 @@ def decode(
     flat_pixels = pixels.reshape(-1, 4)
 
     # First, we need to extract the header to get config
-    # Use default config for header extraction if none provided
     if config is None:
-        # Extract header with default settings to read actual config
-        header_config = StegConfig()  # Default: RGB, 1 bit, interleaved
+        # Auto-detect: exhaustive search across all channel/bit combos
+        detected = detect_encoding(image)
+        if detected:
+            # Reconstruct config from detection result
+            channel_map = {'R': Channel.R, 'G': Channel.G, 'B': Channel.B, 'A': Channel.A}
+            channels = [channel_map[c] for c in detected['config']['channels']]
+            header_config = StegConfig(
+                channels=channels,
+                bits_per_channel=detected['config']['bits_per_channel']
+            )
+        else:
+            # Fallback to default
+            header_config = StegConfig()
     else:
         header_config = config
 
@@ -882,9 +913,12 @@ def analyze_image(image: Image.Image) -> Dict[str, Any]:
     return analysis
 
 
-def detect_encoding(image: Image.Image) -> Optional[Dict[str, Any]]:
+def detect_encoding(image: Image.Image, password: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """
     Attempt to detect if image contains STEG-encoded data.
+
+    If password is provided, also checks for password-derived magic bytes
+    (stealth mode headers that are undetectable without the password).
 
     Returns detection info if magic bytes found, None otherwise.
     """
@@ -892,13 +926,29 @@ def detect_encoding(image: Image.Image) -> Optional[Dict[str, Any]]:
     pixels = np.array(img, dtype=np.uint8)
     flat_pixels = pixels.reshape(-1, 4)
 
-    # Try common configurations
-    configs_to_try = [
-        StegConfig(channels=[Channel.R, Channel.G, Channel.B], bits_per_channel=1),
-        StegConfig(channels=[Channel.R, Channel.G, Channel.B, Channel.A], bits_per_channel=1),
-        StegConfig(channels=[Channel.R], bits_per_channel=1),
-        StegConfig(channels=[Channel.R, Channel.G, Channel.B], bits_per_channel=2),
+    # Exhaustive search — try ALL 15 channel presets × 8 bit depths = 120 combinations
+    all_channel_combos = [
+        [Channel.R, Channel.G, Channel.B],           # RGB (most common first)
+        [Channel.R, Channel.G, Channel.B, Channel.A], # RGBA
+        [Channel.R],                                   # R
+        [Channel.G],                                   # G
+        [Channel.B],                                   # B
+        [Channel.A],                                   # A
+        [Channel.R, Channel.G],                        # RG
+        [Channel.R, Channel.B],                        # RB
+        [Channel.R, Channel.A],                        # RA
+        [Channel.G, Channel.B],                        # GB
+        [Channel.G, Channel.A],                        # GA
+        [Channel.B, Channel.A],                        # BA
+        [Channel.R, Channel.G, Channel.A],             # RGA
+        [Channel.R, Channel.B, Channel.A],             # RBA
+        [Channel.G, Channel.B, Channel.A],             # GBA
     ]
+
+    configs_to_try = []
+    for channels in all_channel_combos:
+        for bits in range(1, 9):  # 1-8 bits per channel
+            configs_to_try.append(StegConfig(channels=channels, bits_per_channel=bits))
 
     for config in configs_to_try:
         try:
@@ -914,7 +964,11 @@ def detect_encoding(image: Image.Image) -> Optional[Dict[str, Any]]:
                 HEADER_SIZE * 8
             )[:HEADER_SIZE]
 
-            if header_bytes[:4] == MAGIC_BYTES:
+            # Check for both fixed magic AND password-derived magic
+            expected_magics = [MAGIC_BYTES]
+            if password:
+                expected_magics.append(derive_magic(password))
+            if header_bytes[:4] in expected_magics:
                 header = StegHeader.from_bytes(header_bytes)
                 return {
                     "detected": True,

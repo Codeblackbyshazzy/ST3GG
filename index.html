@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🦕 STE.GG</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>🥚 STE.GG 🦕</title>
     <style>
         :root {
             --primary: #00ff41;
@@ -31,8 +31,11 @@
             background: var(--bg-dark);
             color: var(--primary);
             font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+            font-size: 14px;
             min-height: 100vh;
             overflow-x: hidden;
+            /* Scale entire UI up ~10% — monospace fonts at 10-12px read too small */
+            zoom: 1.1;
         }
 
         /* Matrix scanline effect */
@@ -55,7 +58,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -166,6 +169,94 @@
             .grid {
                 grid-template-columns: 1fr;
             }
+            .container {
+                padding: 10px;
+            }
+            .header h1 {
+                font-size: 18px !important;
+            }
+            .tab-bar {
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            .tab {
+                font-size: 11px;
+                padding: 6px 10px;
+                flex: 1 1 auto;
+                text-align: center;
+            }
+            .card {
+                padding: 12px;
+            }
+            .form-row {
+                flex-direction: column;
+            }
+            .form-group label {
+                font-size: 12px;
+            }
+            .output {
+                height: auto;
+                max-height: 300px;
+                font-size: 12px;
+            }
+            textarea.textarea {
+                font-size: 13px;
+            }
+            .drop-zone {
+                padding: 25px 15px;
+            }
+            .drop-zone-text {
+                font-size: 12px;
+            }
+            .image-preview {
+                max-width: 100%;
+            }
+            .btn {
+                font-size: 12px;
+                padding: 8px 14px;
+            }
+            /* Force all grids to single column on mobile */
+            [style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important;
+            }
+            /* Agent tab log */
+            .card[style*="flex: 1.5"] {
+                min-height: 350px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                font-size: 13px;
+            }
+            .container {
+                padding: 6px;
+            }
+            .tab {
+                font-size: 10px;
+                padding: 5px 6px;
+            }
+            .card {
+                padding: 8px;
+                border-radius: 6px;
+            }
+        }
+
+        @keyframes agent-pulse-green {
+            0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 65, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(0, 255, 65, 0.7), 0 0 40px rgba(0, 255, 65, 0.2); }
+        }
+        @keyframes agent-pulse-purple {
+            0%, 100% { box-shadow: 0 0 5px rgba(139, 92, 246, 0.3); }
+            50% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.7), 0 0 40px rgba(139, 92, 246, 0.2); }
+        }
+        .agent-running-reveal {
+            animation: agent-pulse-green 1.5s ease-in-out infinite !important;
+            opacity: 1 !important;
+        }
+        .agent-running-conceal {
+            animation: agent-pulse-purple 1.5s ease-in-out infinite !important;
+            opacity: 1 !important;
         }
 
         /* Drop zone */
@@ -749,7 +840,7 @@
             color: #000 !important;
         }
 
-        /* GODMODE tab button */
+        /* SPECTER tab button */
         .tab-godmode {
             color: #ff3333 !important;
             border-color: #ff3333 !important;
@@ -762,16 +853,9 @@
             box-shadow: 0 0 20px rgba(255, 0, 0, 0.4);
         }
 
-        /* Text Lab tab button */
-        .tab-textlab {
-            color: #7c3aed !important;
-            border-color: #7c3aed !important;
-        }
-
-        .tab-textlab.active {
-            background: #7c3aed !important;
-            color: #fff !important;
-        }
+        /* Text Lab tab button — matches default tab style */
+        .tab-textlab { }
+        .tab-textlab.active { }
 
         /* AI Agent tab button */
         .tab-aiagent {
@@ -923,7 +1007,7 @@
             color: #000;
         }
 
-        /* GODMODE panel styles */
+        /* SPECTER panel styles */
         .godmode-header {
             text-align: center;
             margin-bottom: 24px;
@@ -1366,8 +1450,8 @@
             <button class="tab" data-tab="decode">Decode</button>
             <button class="tab" data-tab="analyze">Analyze</button>
             <button class="tab tab-matryoshka" data-tab="matryoshka" id="matryoshka-tab-btn" style="display: none;">🪆 Nested Stegg</button>
-            <button class="tab tab-godmode" data-tab="godmode" id="godmode-tab-btn" style="display: none;">👁 GODMODE</button>
-            <button class="tab tab-textlab" data-tab="textlab" id="textlab-tab-btn" style="display: none;">🔤 Text Lab</button>
+            <button class="tab tab-godmode" data-tab="godmode" id="godmode-tab-btn" style="display: none;">🧬 SPECTER</button>
+            <button class="tab tab-textlab" data-tab="textlab" id="textlab-tab-btn">Text Lab</button>
             <button class="tab tab-aiagent" data-tab="aiagent" id="aiagent-tab-btn">Agent</button>
         </nav>
 
@@ -1506,19 +1590,34 @@
                             <div class="form-group">
                                 <label class="form-label">Channels</label>
                                 <select class="form-select" id="encode-channels">
-                                    <option value="RGB">RGB</option>
-                                    <option value="RGBA">RGBA</option>
+                                    <option value="RGB">RGB (Balanced)</option>
+                                    <option value="RGBA">RGBA (Max capacity)</option>
                                     <option value="R">R only</option>
                                     <option value="G">G only</option>
-                                    <option value="B">B only</option>
+                                    <option value="B">B only (Most stealth)</option>
+                                    <option value="A">A only (Alpha)</option>
+                                    <option value="RG">RG</option>
+                                    <option value="RB">RB</option>
+                                    <option value="RA">RA</option>
+                                    <option value="GB">GB</option>
+                                    <option value="GA">GA</option>
+                                    <option value="BA">BA</option>
+                                    <option value="RGA">RGA</option>
+                                    <option value="RBA">RBA</option>
+                                    <option value="GBA">GBA</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Bits/Channel</label>
                                 <select class="form-select" id="encode-bits">
-                                    <option value="1">1 bit</option>
+                                    <option value="1">1 bit (Most stealth)</option>
                                     <option value="2">2 bits</option>
+                                    <option value="3">3 bits</option>
                                     <option value="4">4 bits</option>
+                                    <option value="5">5 bits</option>
+                                    <option value="6">6 bits</option>
+                                    <option value="7">7 bits</option>
+                                    <option value="8">8 bits (Max capacity)</option>
                                 </select>
                             </div>
                         </div>
@@ -2027,6 +2126,16 @@
                                     <option value="R">R only</option>
                                     <option value="G">G only</option>
                                     <option value="B">B only</option>
+                                    <option value="A">A only</option>
+                                    <option value="RG">RG</option>
+                                    <option value="RB">RB</option>
+                                    <option value="RA">RA</option>
+                                    <option value="GB">GB</option>
+                                    <option value="GA">GA</option>
+                                    <option value="BA">BA</option>
+                                    <option value="RGA">RGA</option>
+                                    <option value="RBA">RBA</option>
+                                    <option value="GBA">GBA</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -2034,7 +2143,12 @@
                                 <select class="form-select" id="decode-bits">
                                     <option value="1">1 bit</option>
                                     <option value="2">2 bits</option>
+                                    <option value="3">3 bits</option>
                                     <option value="4">4 bits</option>
+                                    <option value="5">5 bits</option>
+                                    <option value="6">6 bits</option>
+                                    <option value="7">7 bits</option>
+                                    <option value="8">8 bits</option>
                                 </select>
                             </div>
                         </div>
@@ -2737,10 +2851,10 @@
             </div>
         </section>
 
-        <!-- GODMODE Panel (Hidden Tab) -->
+        <!-- SPECTER Panel (Hidden Tab) -->
         <section class="panel" id="godmode-panel">
             <div class="godmode-header">
-                <h1 class="godmode-main-title">👁 GODMODE ENABLED 👁</h1>
+                <h1 class="godmode-main-title">🧬 SPECTER ENABLED 👁</h1>
                 <p class="godmode-main-subtitle">Channel Cipher Steganography • Virtually Untraceable</p>
             </div>
 
@@ -2879,14 +2993,14 @@
                     <div id="godmode-capacity" class="mt-3" style="font-size: 12px; color: #666;"></div>
 
                     <button class="btn btn-red btn-lg w-full mt-4" onclick="doGodmodeEncode()">
-                        👁 ENCODE GODMODE
+                        👁 ENCODE SPECTER
                     </button>
                 </div>
             </div>
 
             <!-- Decode Section -->
             <div class="card mt-4">
-                <h2 class="card-title text-red">🔓 Decode GODMODE</h2>
+                <h2 class="card-title text-red">🔓 Decode SPECTER</h2>
                 <p class="text-muted">Provide the same cipher pattern/password to decode.</p>
 
                 <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
@@ -2935,10 +3049,25 @@
                 <div class="form-group">
                     <label class="form-label" style="color: #7c3aed;">Method</label>
                     <select class="form-select" id="textlab-method" onchange="updateTextLabMethod()" style="border-color: #7c3aed55;">
-                        <option value="zerowidth">Zero-Width Unicode (invisible chars)</option>
-                        <option value="homoglyph">Homoglyph Substitution (lookalike chars)</option>
-                        <option value="whitespace">Whitespace Encoding (spaces/tabs)</option>
-                        <option value="invisible">Invisible Ink (Unicode tags)</option>
+                        <optgroup label="Classic Methods">
+                            <option value="zerowidth">Zero-Width Unicode (invisible chars)</option>
+                            <option value="homoglyph">Homoglyph Substitution (Cyrillic lookalikes)</option>
+                            <option value="whitespace">Whitespace Encoding (spaces/tabs)</option>
+                            <option value="invisible">Invisible Ink (Unicode tags)</option>
+                        </optgroup>
+                        <optgroup label="Advanced Unicode">
+                            <option value="variation">Variation Selectors (invisible modifiers)</option>
+                            <option value="combining">Combining Marks (invisible joiners)</option>
+                            <option value="confusable">Confusable Whitespace (en/em/thin spaces)</option>
+                            <option value="directional">Directional Overrides (RLO/LRO bidi)</option>
+                            <option value="hangul">Hangul Filler (Korean invisible char)</option>
+                        </optgroup>
+                        <optgroup label="Visual Encoding">
+                            <option value="mathbold">Math Bold (bold Unicode letters)</option>
+                            <option value="braille">Braille Patterns (dot patterns)</option>
+                            <option value="emoji">Emoji Substitution (emoji = 1, text = 0)</option>
+                            <option value="skintone">Emoji Skin Tone (4 tones = 2 bits)</option>
+                        </optgroup>
                     </select>
                 </div>
 
@@ -2954,6 +3083,33 @@
                 </div>
                 <div id="textlab-desc-invisible" class="textlab-desc hidden" style="font-size: 10px; color: var(--text-dim); margin-bottom: 15px; padding: 8px; background: rgba(124,58,237,0.1); border-radius: 4px;">
                     Uses Unicode Tag Characters (U+E0000 range) to embed hidden text. Very obscure, rarely detected.
+                </div>
+                <div id="textlab-desc-variation" class="textlab-desc hidden" style="font-size: 10px; color: var(--text-dim); margin-bottom: 15px; padding: 8px; background: rgba(124,58,237,0.1); border-radius: 4px;">
+                    Adds invisible Variation Selectors (U+FE01) after characters to encode 1-bits. Absence = 0. Extremely hard to detect visually.
+                </div>
+                <div id="textlab-desc-combining" class="textlab-desc hidden" style="font-size: 10px; color: var(--text-dim); margin-bottom: 15px; padding: 8px; background: rgba(124,58,237,0.1); border-radius: 4px;">
+                    Inserts invisible Combining Grapheme Joiner (U+034F) after letters to encode 1-bits. Zero visual impact.
+                </div>
+                <div id="textlab-desc-confusable" class="textlab-desc hidden" style="font-size: 10px; color: var(--text-dim); margin-bottom: 15px; padding: 8px; background: rgba(124,58,237,0.1); border-radius: 4px;">
+                    Replaces spaces with visually identical Unicode spaces: en-space (01), em-space (10), thin-space (11). 2 bits per space.
+                </div>
+                <div id="textlab-desc-directional" class="textlab-desc hidden" style="font-size: 10px; color: var(--text-dim); margin-bottom: 15px; padding: 8px; background: rgba(124,58,237,0.1); border-radius: 4px;">
+                    Inserts invisible Right-to-Left (RLO=1) and Left-to-Right (LRO=0) overrides with PDF cancellation. Invisible in LTR text.
+                </div>
+                <div id="textlab-desc-hangul" class="textlab-desc hidden" style="font-size: 10px; color: var(--text-dim); margin-bottom: 15px; padding: 8px; background: rgba(124,58,237,0.1); border-radius: 4px;">
+                    Replaces spaces with Hangul Filler (U+3164, invisible in most fonts) to encode 1-bits. Regular space = 0.
+                </div>
+                <div id="textlab-desc-mathbold" class="textlab-desc hidden" style="font-size: 10px; color: var(--text-dim); margin-bottom: 15px; padding: 8px; background: rgba(124,58,237,0.1); border-radius: 4px;">
+                    Swaps normal letters with Mathematical Bold variants (U+1D400). Visually bold but encodes 1-bits. Normal = 0.
+                </div>
+                <div id="textlab-desc-braille" class="textlab-desc hidden" style="font-size: 10px; color: var(--text-dim); margin-bottom: 15px; padding: 8px; background: rgba(124,58,237,0.1); border-radius: 4px;">
+                    Maps each byte to a Braille pattern character (U+2800 + byte value). Visible but non-obvious encoding.
+                </div>
+                <div id="textlab-desc-emoji" class="textlab-desc hidden" style="font-size: 10px; color: var(--text-dim); margin-bottom: 15px; padding: 8px; background: rgba(124,58,237,0.1); border-radius: 4px;">
+                    Alternates between two emoji to encode bits: 🔵 = 0, 🔴 = 1. Visible but playful encoding.
+                </div>
+                <div id="textlab-desc-skintone" class="textlab-desc hidden" style="font-size: 10px; color: var(--text-dim); margin-bottom: 15px; padding: 8px; background: rgba(124,58,237,0.1); border-radius: 4px;">
+                    Uses 4 emoji skin tone modifiers to encode 2 bits each. Light=00, MedLight=01, MedDark=10, Dark=11.
                 </div>
 
                 <div class="form-row" style="margin-top: 15px;">
@@ -3016,8 +3172,8 @@
                 <div class="card">
                     <h2 class="card-title" style="color: #8b9dc3;">🤖 AI Steg Analysis Agent</h2>
                     <p class="text-muted" style="font-size: 11px; margin-bottom: 16px;">
-                        An autonomous AI agent that analyzes images for hidden data using multiple steganography techniques.
-                        Powered by OpenRouter - uses AI to intelligently test all known decoding methods for the uploaded file type.
+                        An autonomous AI agent that can both reveal hidden data and conceal secrets using all known steganography techniques.
+                        Powered by OpenRouter - intelligently tests every decoding method for the uploaded file type.
                     </p>
 
                     <div class="form-group">
@@ -3033,63 +3189,119 @@
 
                     <div class="form-group">
                         <label>Model</label>
-                        <select id="aiagent-model" class="select">
+                        <select id="aiagent-model" class="select" onchange="toggleCustomModel()">
                             <option value="anthropic/claude-opus-4.6" selected>Claude Opus 4.6 (Recommended)</option>
                             <option value="anthropic/claude-sonnet-4.6">Claude Sonnet 4.6</option>
                             <option value="openai/gpt-5.4">GPT-5.4</option>
                             <option value="google/gemini-3.1-pro">Gemini 3.1 Pro</option>
                             <option value="x-ai/grok-4.20">Grok 4.20</option>
                             <option value="anthropic/claude-haiku-4.5">Claude Haiku 4.5 (Fastest)</option>
+                            <option value="custom">Custom model...</option>
                         </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Image to Analyze</label>
-                        <div class="drop-zone" id="aiagent-image-drop">
-                            <input type="file" id="aiagent-image-input" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp,image/tiff,image/svg+xml,image/x-icon">
-                            <div class="drop-zone-text">Drop image or click to upload</div>
-                            <div class="drop-zone-hint">PNG, JPEG, WebP, or GIF</div>
+                        <input type="text" id="aiagent-custom-model" class="input" placeholder="e.g., meta-llama/llama-4-scout, mistralai/mistral-large" style="display: none; margin-top: 6px; font-size: 12px;">
+                        <div id="aiagent-custom-hint" class="text-muted" style="display: none; font-size: 10px; margin-top: 3px;">
+                            Any model ID from <a href="https://openrouter.ai/models" target="_blank" style="color: var(--secondary);">openrouter.ai/models</a> — including free models
                         </div>
-                        <img id="aiagent-image-preview" class="image-preview hidden">
-                        <div id="aiagent-image-info" class="image-info"></div>
                     </div>
 
                     <div class="form-group">
-                        <label>Context / Hints (Optional)</label>
+                        <label>Agent Mode</label>
+                        <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+                            <button class="btn" id="aiagent-mode-analyze" onclick="setAgentMode('analyze')" style="flex:1; padding: 12px 16px; font-size: 15px; font-weight: bold; background: var(--primary); color: #000; border: 2px solid var(--primary); border-radius: 8px; letter-spacing: 1px; transition: all 0.3s ease; text-transform: uppercase;">🔍 Reveal</button>
+                            <button class="btn" id="aiagent-mode-encode" onclick="setAgentMode('encode')" style="flex:1; padding: 12px 16px; font-size: 15px; font-weight: normal; background: transparent; color: var(--text); border: 2px solid #8b5cf644; border-radius: 8px; letter-spacing: 1px; opacity: 0.6; transition: all 0.3s ease; text-transform: uppercase;">🔮 Conceal</button>
+                        </div>
+                    </div>
+
+                    <div id="aiagent-encode-section" style="display: none;">
+                        <div class="form-group">
+                            <label style="color: #c471ed;">Secret Message to Conceal</label>
+                            <textarea id="aiagent-secret-message" class="textarea" rows="2" placeholder="Enter the secret message to embed in the carrier image..." style="border-color: #8b5cf6;"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- REVEAL: File upload zone (only visible in Reveal mode) -->
+                    <div id="aiagent-reveal-upload" class="form-group">
+                        <label>File to Reveal</label>
+                        <div class="drop-zone" id="aiagent-reveal-drop">
+                            <input type="file" id="aiagent-reveal-input" accept="image/*,audio/*,application/pdf,application/zip,application/gzip,application/x-tar,text/*,.pcap,.sqlite,.mid,.midi,.pem,.rtf">
+                            <div class="drop-zone-text">Drop stego file or click to upload</div>
+                            <div class="drop-zone-hint">Upload the file you suspect contains hidden data</div>
+                        </div>
+                        <img id="aiagent-reveal-preview" class="image-preview hidden">
+                        <div id="aiagent-reveal-info" class="image-info"></div>
+                    </div>
+
+                    <!-- CONCEAL: Carrier upload zone (only visible in Conceal mode) -->
+                    <div id="aiagent-conceal-upload" class="form-group" style="display: none;">
+                        <label style="color: #8b5cf6;">Carrier Image</label>
+                        <div class="drop-zone" id="aiagent-conceal-drop" style="border-color: #8b5cf644;">
+                            <input type="file" id="aiagent-conceal-input" accept="image/*">
+                            <div class="drop-zone-text">Drop carrier image or click to upload</div>
+                            <div class="drop-zone-hint">The innocent-looking image to hide your secret in</div>
+                        </div>
+                        <div style="display: flex; gap: 6px; align-items: center; margin-top: 8px;">
+                            <input type="text" id="aiagent-image-prompt" class="input" placeholder="Or describe one to generate (e.g., 'sunset', 'abstract art')" style="flex: 1; font-size: 11px; border-color: #8b5cf6;">
+                            <button class="btn btn-sm" onclick="generateCarrierImage()" id="aiagent-generate-btn" style="background: #8b5cf6; color: #fff; white-space: nowrap; padding: 6px 12px;">🎨 Generate</button>
+                        </div>
+                        <div id="aiagent-generate-status" style="display: none; margin-top: 6px; font-size: 11px; color: #8b5cf6;"></div>
+                        <img id="aiagent-conceal-preview" class="image-preview hidden">
+                        <div id="aiagent-conceal-info" class="image-info"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label id="aiagent-context-label">Context / Hints (Optional)</label>
                         <textarea id="aiagent-context" class="textarea" rows="3" placeholder="e.g., 'This is for a puzzle about space exploration' or 'Password might be related to the image filename' or 'Try common CTF techniques'"></textarea>
                     </div>
 
-                    <div class="form-group">
-                        <label class="toggle">
-                            <input type="checkbox" id="aiagent-vision">
-                            <span class="toggle-switch"></span>
-                            <span class="toggle-label">Use Vision (send image to AI for visual analysis)</span>
-                        </label>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Max Iterations</label>
-                        <input type="range" id="aiagent-iterations" min="3" max="20" value="10" class="slider">
-                        <span id="aiagent-iterations-value" class="text-muted" style="margin-left: 8px;">10</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="toggle">
-                            <input type="checkbox" id="aiagent-exhaustive">
-                            <span class="toggle-switch"></span>
-                            <span class="toggle-label">Exhaustive Mode (try ALL techniques - slower but thorough)</span>
-                        </label>
-                        <div class="text-muted" style="font-size: 10px; margin-top: 4px;">
-                            Enables comprehensive checklist-based analysis. Agent will systematically try every technique for the detected file type.
+                    <!-- Conceal-only: encoding method selector -->
+                    <div id="aiagent-encode-options" style="display: none;">
+                        <div class="form-group">
+                            <label style="color: #8b5cf6;">Encoding Method</label>
+                            <select id="aiagent-encode-method" class="select" style="border-color: #8b5cf6;">
+                                <option value="auto">Auto (let AI choose best method)</option>
+                                <option value="lsb">LSB — Classic, high capacity</option>
+                                <option value="dct">DCT — Compression resistant (PNG→JPEG)</option>
+                                <option value="pvd">PVD — Harder to detect statistically</option>
+                                <option value="chroma">Chroma — Hides in color channels</option>
+                                <option value="text">Text Steg — Zero-width Unicode</option>
+                            </select>
                         </div>
-                        <div id="checklist-info-btn" onclick="showChecklistModal()" style="display: none; margin-top: 8px; padding: 6px 12px; font-size: 11px; background: transparent; border: 1px dashed var(--border); color: var(--secondary); border-radius: 4px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--secondary)';this.style.background='var(--bg-hover)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='transparent'">
-                            <span style="opacity: 0.7;">[i]</span> <span id="checklist-info-text">View techniques checklist</span>
+                    </div>
+
+                    <!-- Reveal-only: analysis options -->
+                    <div id="aiagent-reveal-options">
+                        <div class="form-group">
+                            <label class="toggle">
+                                <input type="checkbox" id="aiagent-vision">
+                                <span class="toggle-switch"></span>
+                                <span class="toggle-label">Use Vision (send image to AI for visual analysis)</span>
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Max Iterations</label>
+                            <input type="range" id="aiagent-iterations" min="3" max="20" value="10" class="slider">
+                            <span id="aiagent-iterations-value" class="text-muted" style="margin-left: 8px;">10</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="toggle">
+                                <input type="checkbox" id="aiagent-exhaustive">
+                                <span class="toggle-switch"></span>
+                                <span class="toggle-label">Exhaustive Mode (try ALL techniques - slower but thorough)</span>
+                            </label>
+                            <div class="text-muted" style="font-size: 10px; margin-top: 4px;">
+                                Enables comprehensive checklist-based analysis. Agent will systematically try every technique for the detected file type.
+                            </div>
+                            <div id="checklist-info-btn" onclick="showChecklistModal()" style="display: none; margin-top: 8px; padding: 6px 12px; font-size: 11px; background: transparent; border: 1px dashed var(--border); color: var(--secondary); border-radius: 4px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='var(--secondary)';this.style.background='var(--bg-hover)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='transparent'">
+                                <span style="opacity: 0.7;">[i]</span> <span id="checklist-info-text">View techniques checklist</span>
+                            </div>
                         </div>
                     </div>
 
                     <div style="display: flex; gap: 8px; margin-top: 16px;">
-                        <button class="btn btn-primary" id="aiagent-start-btn" onclick="startAIAgent()">🚀 Start Analysis</button>
-                        <button class="btn btn-secondary" id="aiagent-stop-btn" onclick="stopAIAgent()" disabled>⏹ Stop</button>
+                        <button class="btn btn-primary" id="aiagent-start-btn" onclick="startAIAgent()">🔍 Reveal</button>
+                        <button class="btn btn-secondary" id="aiagent-stop-btn" onclick="stopAIAgent()" style="display: none;">⏹ Stop</button>
                         <button class="btn btn-secondary" onclick="clearAIAgentLog()">🗑 Clear Log</button>
                     </div>
                 </div>
@@ -3147,9 +3359,9 @@
         <span class="indicator-hint">click to deactivate</span>
     </div>
 
-    <!-- GODMODE Indicator (shown when active) -->
+    <!-- SPECTER Indicator (shown when active) -->
     <div class="godmode-indicator hidden" id="godmode-indicator" onclick="deactivateGodmode()">
-        <span class="indicator-text">👁 GODMODE ACTIVE</span>
+        <span class="indicator-text">🧬 SPECTER ACTIVE</span>
         <span class="indicator-hint">click to deactivate</span>
     </div>
 
@@ -4891,8 +5103,14 @@
             'A': [3],
             'RG': [0, 1],
             'RB': [0, 2],
+            'RA': [0, 3],
             'GB': [1, 2],
+            'GA': [1, 3],
+            'BA': [2, 3],
             'RGB': [0, 1, 2],
+            'RGA': [0, 1, 3],
+            'RBA': [0, 2, 3],
+            'GBA': [1, 2, 3],
             'RGBA': [0, 1, 2, 3]
         };
 
@@ -4925,7 +5143,7 @@
             matryoshkaPayloadMode: 'text',  // 'text' or 'file'
             matryoshkaPayloadFile: null,
             matryoshkaPayloadFileName: null,
-            // GODMODE state
+            // SPECTER state
             godmodeActive: false,
             godmodeCipherMode: 'manual',  // 'manual' or 'password'
             godmodeEmbedMode: 'lsb',  // 'lsb' or 'dct'
@@ -4977,11 +5195,156 @@
             const canvas = document.createElement('canvas');
             canvas.width = img.naturalWidth || img.width;
             canvas.height = img.naturalHeight || img.height;
-            // Use willReadFrequently for steganography pixel operations
             const ctx = canvas.getContext('2d', { willReadFrequently: true });
             ctx.drawImage(img, 0, 0);
             return canvas;
         }
+
+        /**
+         * Parse raw PNG bytes → RGBA pixel array WITHOUT canvas premultiplied alpha.
+         * Returns {width, height, pixels: Uint8Array} where pixels is RGBA interleaved.
+         * This bypasses the canvas entirely, preserving exact pixel values.
+         */
+        async function parsePngToPixels(pngBytes) {
+            if (!pngBytes || pngBytes.length < 8) return null;
+            if (pngBytes[0] !== 0x89 || pngBytes[1] !== 0x50) return null;
+
+            let pos = 8, width, height, bitDepth, colorType;
+            const idatChunks = [];
+
+            while (pos + 12 <= pngBytes.length) {
+                const len = (pngBytes[pos]<<24)|(pngBytes[pos+1]<<16)|(pngBytes[pos+2]<<8)|pngBytes[pos+3];
+                const type = String.fromCharCode(pngBytes[pos+4],pngBytes[pos+5],pngBytes[pos+6],pngBytes[pos+7]);
+                if (type === 'IHDR') {
+                    const d = pngBytes.slice(pos+8, pos+8+len);
+                    width = (d[0]<<24)|(d[1]<<16)|(d[2]<<8)|d[3];
+                    height = (d[4]<<24)|(d[5]<<16)|(d[6]<<8)|d[7];
+                    bitDepth = d[8]; colorType = d[9];
+                } else if (type === 'IDAT') {
+                    idatChunks.push(pngBytes.slice(pos+8, pos+8+len));
+                } else if (type === 'IEND') break;
+                pos += 12 + len;
+            }
+            if (!width || !height || !idatChunks.length || bitDepth !== 8) return null;
+
+            // Concatenate IDAT data
+            const totalLen = idatChunks.reduce((s,c) => s + c.length, 0);
+            const compressed = new Uint8Array(totalLen);
+            let off = 0;
+            for (const c of idatChunks) { compressed.set(c, off); off += c.length; }
+
+            // Decompress zlib data. PNG IDAT uses zlib format (RFC 1950).
+            // DecompressionStream('deflate') handles zlib format in browsers.
+            let raw;
+            try {
+                const ds = new DecompressionStream('deflate');
+                const writer = ds.writable.getWriter();
+                const reader = ds.readable.getReader();
+                writer.write(compressed);
+                writer.close();
+                const chunks = [];
+                while (true) {
+                    const {done, value} = await reader.read();
+                    if (done) break;
+                    chunks.push(value);
+                }
+                const totalRaw = chunks.reduce((s,c) => s + c.length, 0);
+                raw = new Uint8Array(totalRaw);
+                let rawOff = 0;
+                for (const c of chunks) { raw.set(c, rawOff); rawOff += c.length; }
+            } catch (e) {
+                // If 'deflate' fails, it might need raw inflate. Can't decompress.
+                return null;
+            }
+
+            // Determine bytes per pixel and apply PNG filters
+            const channels = colorType === 6 ? 4 : colorType === 2 ? 3 : colorType === 4 ? 2 : 1;
+            const bpp = channels; // bytes per pixel (at 8-bit depth)
+            const stride = 1 + width * bpp; // filter byte + row data
+
+            if (raw.length < height * stride) return null;
+
+            // Unfilter
+            const unfiltered = new Uint8Array(width * height * bpp);
+            const prev = new Uint8Array(width * bpp); // previous row (starts as zeros)
+
+            for (let y = 0; y < height; y++) {
+                const filterType = raw[y * stride];
+                const rowStart = y * stride + 1;
+                const outStart = y * width * bpp;
+
+                for (let x = 0; x < width * bpp; x++) {
+                    const cur = raw[rowStart + x];
+                    const a = x >= bpp ? unfiltered[outStart + x - bpp] : 0; // left
+                    const b = prev[x]; // above
+                    const c = x >= bpp ? (y > 0 ? unfiltered[(y-1) * width * bpp + x - bpp] : 0) : 0; // upper-left...
+                    // Actually for Paeth we need the actual upper-left, let me use prev
+                    const ab = x >= bpp ? prev[x - bpp] : 0; // upper-left
+
+                    let val;
+                    switch (filterType) {
+                        case 0: val = cur; break; // None
+                        case 1: val = (cur + a) & 0xFF; break; // Sub
+                        case 2: val = (cur + b) & 0xFF; break; // Up
+                        case 3: val = (cur + Math.floor((a + b) / 2)) & 0xFF; break; // Average
+                        case 4: { // Paeth
+                            const p = a + b - ab;
+                            const pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - ab);
+                            const pr = pa <= pb && pa <= pc ? a : pb <= pc ? b : ab;
+                            val = (cur + pr) & 0xFF;
+                            break;
+                        }
+                        default: val = cur;
+                    }
+                    unfiltered[outStart + x] = val;
+                }
+                // Copy current row to prev
+                prev.set(unfiltered.slice(outStart, outStart + width * bpp));
+            }
+
+            // Convert to RGBA if needed
+            const pixels = new Uint8Array(width * height * 4);
+            for (let i = 0; i < width * height; i++) {
+                if (channels === 4) { // RGBA
+                    pixels[i*4]   = unfiltered[i*4];
+                    pixels[i*4+1] = unfiltered[i*4+1];
+                    pixels[i*4+2] = unfiltered[i*4+2];
+                    pixels[i*4+3] = unfiltered[i*4+3];
+                } else if (channels === 3) { // RGB
+                    pixels[i*4]   = unfiltered[i*3];
+                    pixels[i*4+1] = unfiltered[i*3+1];
+                    pixels[i*4+2] = unfiltered[i*3+2];
+                    pixels[i*4+3] = 255;
+                } else if (channels === 2) { // Gray+Alpha
+                    pixels[i*4] = pixels[i*4+1] = pixels[i*4+2] = unfiltered[i*2];
+                    pixels[i*4+3] = unfiltered[i*2+1];
+                } else { // Grayscale
+                    pixels[i*4] = pixels[i*4+1] = pixels[i*4+2] = unfiltered[i];
+                    pixels[i*4+3] = 255;
+                }
+            }
+
+            return { width, height, pixels };
+        }
+
+        /**
+         * Create a canvas with raw (non-premultiplied) pixel data from PNG bytes.
+         * Uses parsePngToPixels to bypass canvas premultiplied alpha.
+         */
+        async function pngBytesToCanvas(pngBytes) {
+            const parsed = await parsePngToPixels(pngBytes);
+            if (!parsed) return null;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = parsed.width;
+            canvas.height = parsed.height;
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
+            const imageData = ctx.createImageData(parsed.width, parsed.height);
+            imageData.data.set(parsed.pixels);
+            ctx.putImageData(imageData, 0, 0); // putImageData does NOT premultiply!
+            return canvas;
+        }
+
 
         function crc32(data) {
             let crc = 0xFFFFFFFF;
@@ -5219,7 +5582,8 @@
         function findStegHeader(canvas) {
             const allChannelCombos = [
                 [0, 1, 2], [0, 1, 2, 3], [0], [1], [2], [3],
-                [0, 1], [0, 2], [1, 2], [0, 3], [1, 3], [2, 3]
+                [0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3],
+                [0, 1, 3], [0, 2, 3], [1, 2, 3]
             ];
 
             for (const channels of allChannelCombos) {
@@ -5251,20 +5615,23 @@
             const unitsNeeded = Math.ceil(bitsNeeded / bitsPerChannel);
             const bitMask = (1 << bitsPerChannel) - 1;
 
-            // Skip channels that are constant (e.g., fully opaque alpha = all 0xFF)
-            // Extracting LSB from constant channels gives meaningless data
-            const activeChannels = channels.filter(ch => {
+            // Only skip constant channels when extracting from a SINGLE channel.
+            // For multi-channel extraction, we MUST keep all channels to preserve
+            // bit alignment (removing a channel shifts all subsequent bits).
+            let activeChannels = channels;
+            if (channels.length === 1) {
+                const ch = channels[0];
                 const first = pixels[ch] & bitMask;
-                // Check first 100 pixels for any variation
+                let isConstant = true;
                 for (let i = 1; i < Math.min(100, totalPixels); i++) {
-                    if ((pixels[i * 4 + ch] & bitMask) !== first) return true;
+                    if ((pixels[i * 4 + ch] & bitMask) !== first) {
+                        isConstant = false;
+                        break;
+                    }
                 }
-                return false; // All same = constant = skip
-            });
-
-            if (activeChannels.length === 0) {
-                // All requested channels are constant, return empty
-                return new Uint8Array(0);
+                if (isConstant) {
+                    return new Uint8Array(0);
+                }
             }
 
             const result = [];
@@ -5622,23 +5989,29 @@
         async function smartScan(canvas) {
             const results = [];
 
-            // Comprehensive channel/bit configurations
+            // All 15 channel presets (matching ST3GG's CHANNEL_PRESETS)
             const channelSets = [
-                { name: 'RGB', channels: [0, 1, 2] },
-                { name: 'RGBA', channels: [0, 1, 2, 3] },
                 { name: 'R', channels: [0] },
                 { name: 'G', channels: [1] },
                 { name: 'B', channels: [2] },
                 { name: 'A', channels: [3] },
                 { name: 'RG', channels: [0, 1] },
                 { name: 'RB', channels: [0, 2] },
+                { name: 'RA', channels: [0, 3] },
                 { name: 'GB', channels: [1, 2] },
+                { name: 'GA', channels: [1, 3] },
+                { name: 'BA', channels: [2, 3] },
+                { name: 'RGB', channels: [0, 1, 2] },
+                { name: 'RGA', channels: [0, 1, 3] },
+                { name: 'RBA', channels: [0, 2, 3] },
+                { name: 'GBA', channels: [1, 2, 3] },
+                { name: 'RGBA', channels: [0, 1, 2, 3] },
             ];
 
-            // Generate all configs with bits 1-4 for quick scan
+            // Generate configs: all 15 presets x bits 1-8 for full coverage
             const configs = [];
             for (const chanSet of channelSets) {
-                for (let bits = 1; bits <= 4; bits++) {
+                for (let bits = 1; bits <= 8; bits++) {
                     configs.push({
                         name: bits === 1 ? chanSet.name : `${chanSet.name}-${bits}bit`,
                         channels: chanSet.channels,
@@ -5647,13 +6020,15 @@
                 }
             }
 
-            // EXHAUSTIVE header search - all channel combos, bits 1-8
+            // EXHAUSTIVE header search - all 15 channel presets, bits 1-8
             const allChannelCombos = [
                 [0, 1, 2], [0, 1, 2, 3], [0], [1], [2], [3],
-                [0, 1], [0, 2], [1, 2], [0, 3], [1, 3], [2, 3]
+                [0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3],
+                [0, 1, 3], [0, 2, 3], [1, 2, 3]
             ];
 
             let foundHeader = false;
+            let autoExtracted = null;
             for (const chanCombo of allChannelCombos) {
                 if (foundHeader) break;
                 for (let bitDepth = 1; bitDepth <= 8; bitDepth++) {
@@ -5662,17 +6037,45 @@
                         const header = parseHeader(headerBytes);
                         if (header) {
                             const channelStr = header.channels.map(c => ['R', 'G', 'B', 'A'][c]).join('');
+
+                            // AUTO-EXTRACT: Don't wait for LLM — decode immediately
+                            let extractedText = null;
+                            try {
+                                const channelName = ['R','G','B','A'].filter((c,i) => chanCombo.includes(i)).join('');
+                                const decoded = await decode(canvas, channelName, bitDepth);
+                                if (decoded && decoded.length > 0) {
+                                    extractedText = new TextDecoder('utf-8', { fatal: false }).decode(decoded);
+
+                                    // Also create a downloadable artifact
+                                    const blob = new Blob([decoded]);
+                                    const url = URL.createObjectURL(blob);
+                                    autoExtracted = {
+                                        text: extractedText.slice(0, 500),
+                                        size: decoded.length,
+                                        downloadUrl: url,
+                                        channelStr,
+                                        bits: header.bitsPerChannel,
+                                        originalLength: header.originalLength
+                                    };
+                                }
+                            } catch (decErr) {
+                                // Header found but decode failed — still report the header
+                            }
+
                             results.push({
                                 name: 'STEG-HEADER',
                                 channels: channelStr,
                                 bits: header.bitsPerChannel,
                                 status: 'STEG_DETECTED',
                                 confidence: 100,
-                                preview: `[STEG v${header.version} - ${formatSize(header.originalLength)} - ${channelStr} ${header.bitsPerChannel}bit]`,
+                                preview: extractedText
+                                    ? `[DECODED] ${extractedText.slice(0, 100)}`
+                                    : `[STEG v${header.version} - ${formatSize(header.originalLength)} - ${channelStr} ${header.bitsPerChannel}bit]`,
                                 hasHeader: true,
                                 rawData: null,
                                 headerConfig: { channels: chanCombo, bits: bitDepth },
-                                detectedAt: `${['R','G','B','A'].filter((c,i) => chanCombo.includes(i)).join('')}-${bitDepth}bit`
+                                detectedAt: `${['R','G','B','A'].filter((c,i) => chanCombo.includes(i)).join('')}-${bitDepth}bit`,
+                                autoExtracted: autoExtracted
                             });
                             foundHeader = true;
                             break;
@@ -5722,8 +6125,9 @@
                         status = 'BINARY/NOISE';
                     }
 
-                    // Only add to results if there's something interesting
-                    if (hasMagic || detectedFile || analysis.confidence >= 30) {
+                    // Only add to results if there's something genuinely interesting
+                    // (raised threshold to reduce false positives from noise)
+                    if (hasMagic || detectedFile || (analysis.isText && analysis.confidence >= 45)) {
                         results.push({
                             name: cfg.name,
                             channels: cfg.channels.map(c => ['R', 'G', 'B', 'A'][c]).join(','),
@@ -6391,7 +6795,7 @@
 
             // Create header: PLTE magic + data length
             const header = new Uint8Array(8);
-            header[0] = 0x50; header[1] = 0x4C; header[2] = 0x54; header[3] = 0x45; // "PLTE"
+            header[0] = 0x50; header[1] = 0x4C; header[2] = 0x54; header[3] = 0x45;
             header[4] = (data.length >> 24) & 0xFF;
             header[5] = (data.length >> 16) & 0xFF;
             header[6] = (data.length >> 8) & 0xFF;
@@ -6401,7 +6805,6 @@
             fullData.set(header);
             fullData.set(data, header.length);
 
-            // Convert to bits
             const bits = [];
             for (let i = 0; i < fullData.length; i++) {
                 for (let j = 7; j >= 0; j--) {
@@ -6412,7 +6815,7 @@
             // Quantize image to palette
             let palette = quantizeColors(pixels, numColors);
 
-            // Sort palette by luminance then R, G, B for consistent ordering with decoder
+            // Sort palette by luminance then R, G, B
             palette.sort((a, b) => {
                 const lum1 = 0.299 * a.r + 0.587 * a.g + 0.114 * a.b;
                 const lum2 = 0.299 * b.r + 0.587 * b.g + 0.114 * b.b;
@@ -6422,41 +6825,50 @@
                 return a.b - b.b;
             });
 
-            // Create index map
-            const indices = new Uint8Array(totalPixels);
-            for (let i = 0; i < totalPixels; i++) {
+            // CRITICAL: Write palette colors into the first N pixels so the decoder
+            // can reconstruct the exact palette. Without this, unused palette entries
+            // disappear and index ordering shifts, corrupting the data.
+            const paletteSize = palette.length;
+            if (paletteSize + bits.length > totalPixels) {
+                throw new Error(`Palette capacity exceeded: need ${paletteSize + bits.length} pixels, have ${totalPixels}`);
+            }
+            for (let i = 0; i < paletteSize; i++) {
+                const idx = i * 4;
+                pixels[idx] = palette[i].r;
+                pixels[idx + 1] = palette[i].g;
+                pixels[idx + 2] = palette[i].b;
+            }
+
+            // Map remaining pixels to closest palette index
+            const indices = new Int32Array(totalPixels);
+            for (let i = paletteSize; i < totalPixels; i++) {
                 const idx = i * 4;
                 indices[i] = findClosestPaletteIndex(pixels[idx], pixels[idx+1], pixels[idx+2], palette);
             }
 
             if (mode === 'index') {
-                // Encode in LSB of palette indices
-                // Need pairs of similar colors to switch between
-                const capacity = totalPixels;
+                const capacity = totalPixels - paletteSize;
                 if (bits.length > capacity) {
                     throw new Error(`Palette capacity exceeded: need ${bits.length} bits, have ${capacity}`);
                 }
 
-                // Modify indices to encode bits (using index parity)
+                // Encode bits in index parity (starting after palette pixels)
                 for (let i = 0; i < bits.length; i++) {
-                    const currentParity = indices[i] & 1;
+                    const pixelI = paletteSize + i;
+                    const currentParity = indices[pixelI] & 1;
                     if (currentParity !== bits[i]) {
-                        // Need to flip parity - find nearest index with correct parity
-                        const currentIdx = indices[i];
-
-                        // Find closest color with opposite parity
-                        let bestIdx = currentIdx ^ 1; // Simple flip
-                        if (bestIdx >= palette.length) bestIdx = currentIdx > 0 ? currentIdx - 1 : 1;
-                        indices[i] = bestIdx;
+                        const currentIdx = indices[pixelI];
+                        let bestIdx = currentIdx ^ 1;
+                        if (bestIdx >= paletteSize) bestIdx = currentIdx > 0 ? currentIdx - 1 : 1;
+                        indices[pixelI] = bestIdx;
                     }
                 }
             } else {
-                // Order mode - more complex, skip for now
                 throw new Error('Palette ordering mode not yet implemented');
             }
 
-            // Apply modified indices back to pixels
-            for (let i = 0; i < totalPixels; i++) {
+            // Apply modified indices back to pixels (after palette area)
+            for (let i = paletteSize; i < totalPixels; i++) {
                 const idx = i * 4;
                 const color = palette[indices[i]];
                 pixels[idx] = color.r;
@@ -6475,16 +6887,13 @@
             const totalPixels = canvas.width * canvas.height;
 
             if (mode === 'index') {
-                // Extract unique colors and sort them deterministically
-                // This must match the order used by paletteEncode after quantization
+                // Discover unique colors and sort deterministically
                 const colorSet = new Set();
                 for (let i = 0; i < totalPixels; i++) {
                     const idx = i * 4;
-                    const key = `${pixels[idx]},${pixels[idx+1]},${pixels[idx+2]}`;
-                    colorSet.add(key);
+                    colorSet.add(`${pixels[idx]},${pixels[idx+1]},${pixels[idx+2]}`);
                 }
 
-                // Sort colors by luminance, then R, G, B for consistent ordering
                 const sortedColors = Array.from(colorSet).sort((a, b) => {
                     const [r1, g1, b1] = a.split(',').map(Number);
                     const [r2, g2, b2] = b.split(',').map(Number);
@@ -6496,20 +6905,21 @@
                     return b1 - b2;
                 });
 
-                // Build color to index map
+                const paletteSize = sortedColors.length;
                 const colorMap = new Map();
                 sortedColors.forEach((key, idx) => colorMap.set(key, idx));
 
-                // Extract bits based on color index parity
+                // Extract bits from index parity (skip first paletteSize pixels = palette area)
                 const bits = [];
-                for (let i = 0; i < totalPixels; i++) {
+                for (let i = paletteSize; i < totalPixels; i++) {
                     const idx = i * 4;
                     const key = `${pixels[idx]},${pixels[idx+1]},${pixels[idx+2]}`;
                     const colorIdx = colorMap.get(key);
-                    bits.push(colorIdx & 1);
+                    if (colorIdx !== undefined) {
+                        bits.push(colorIdx & 1);
+                    }
                 }
 
-                // Convert bits to bytes
                 const bytes = [];
                 for (let i = 0; i + 7 < bits.length; i += 8) {
                     let byte = 0;
@@ -6525,7 +6935,6 @@
                 }
 
                 const dataLength = (bytes[4] << 24) | (bytes[5] << 16) | (bytes[6] << 8) | bytes[7];
-
                 if (dataLength > bytes.length - 8 || dataLength < 0) {
                     throw new Error('Invalid palette data length');
                 }
@@ -7607,7 +8016,7 @@
             const secret = document.getElementById('textlab-secret').value;
             const cover = document.getElementById('textlab-cover').value;
 
-            console.log('TextLab encode - method:', method, 'secret length:', secret?.length, 'cover length:', cover?.length);
+            console.log('TextLab encode - method:', method);
 
             if (!secret) {
                 notify('Enter a secret message!', 'error');
@@ -7661,9 +8070,137 @@
                     stats = `${encoded.bitsUsed}/${encoded.bitsNeeded} bits in trailing whitespace`;
 
                 } else if (method === 'invisible') {
-                    console.log('Encoding invisible ink...');
                     result = encodeInvisibleInk(secret, cover);
                     stats = `${secret.length} chars hidden as Unicode tags`;
+
+                } else if (method === 'variation') {
+                    // Variation Selector: add U+FE01 after char = 1, no VS = 0
+                    const secretBytes = new TextEncoder().encode(secret);
+                    let bits = '';
+                    for (const b of secretBytes) bits += b.toString(2).padStart(8, '0');
+                    bits = secretBytes.length.toString(2).padStart(16, '0') + bits;
+                    let out = '', bi = 0;
+                    for (const ch of cover) {
+                        out += ch;
+                        if (bi < bits.length && ch.match(/[a-zA-Z0-9]/)) {
+                            if (bits[bi] === '1') out += '\uFE01';
+                            bi++;
+                        }
+                    }
+                    result = out;
+                    stats = `${bi} bits encoded via variation selectors`;
+
+                } else if (method === 'combining') {
+                    // CGJ: add U+034F after letter = 1, no CGJ = 0
+                    const secretBytes = new TextEncoder().encode(secret);
+                    let bits = '';
+                    for (const b of secretBytes) bits += b.toString(2).padStart(8, '0');
+                    bits = secretBytes.length.toString(2).padStart(16, '0') + bits;
+                    let out = '', bi = 0;
+                    for (const ch of cover) {
+                        out += ch;
+                        if (bi < bits.length && ch.match(/[a-zA-Z]/)) {
+                            if (bits[bi] === '1') out += '\u034F';
+                            bi++;
+                        }
+                    }
+                    result = out;
+                    stats = `${bi} bits encoded via combining marks`;
+
+                } else if (method === 'confusable') {
+                    // Confusable whitespace: regular=00, en=01, em=10, thin=11
+                    const secretBytes = new TextEncoder().encode(secret);
+                    let bits = '';
+                    for (const b of secretBytes) bits += b.toString(2).padStart(8, '0');
+                    bits = secretBytes.length.toString(2).padStart(16, '0') + bits;
+                    const spaceMap = {'00':' ', '01':'\u2002', '10':'\u2003', '11':'\u2009'};
+                    let out = '', bi = 0;
+                    for (const ch of cover) {
+                        if (ch === ' ' && bi + 1 < bits.length) {
+                            out += spaceMap[bits[bi] + bits[bi+1]] || ' ';
+                            bi += 2;
+                        } else { out += ch; }
+                    }
+                    result = out;
+                    stats = `${bi} bits encoded via confusable whitespace`;
+
+                } else if (method === 'directional') {
+                    // RLO=1, LRO=0, PDF cancels each
+                    const secretBytes = new TextEncoder().encode(secret);
+                    let bits = '';
+                    for (const b of secretBytes) bits += b.toString(2).padStart(8, '0');
+                    bits = secretBytes.length.toString(2).padStart(16, '0') + bits;
+                    let dir = '';
+                    for (const bit of bits) dir += (bit === '1' ? '\u202E' : '\u202D') + '\u202C';
+                    result = cover[0] + dir + cover.slice(1);
+                    stats = `${bits.length} bits encoded via directional overrides`;
+
+                } else if (method === 'hangul') {
+                    // Hangul Filler U+3164 = 1, regular space = 0
+                    const secretBytes = new TextEncoder().encode(secret);
+                    let bits = '';
+                    for (const b of secretBytes) bits += b.toString(2).padStart(8, '0');
+                    bits = secretBytes.length.toString(2).padStart(16, '0') + bits;
+                    let out = '', bi = 0;
+                    for (const ch of cover) {
+                        if (ch === ' ' && bi < bits.length) {
+                            out += bits[bi] === '1' ? '\u3164' : ' ';
+                            bi++;
+                        } else { out += ch; }
+                    }
+                    result = out;
+                    stats = `${bi} bits encoded via Hangul filler`;
+
+                } else if (method === 'mathbold') {
+                    // Math Bold Unicode: bold = 1, normal = 0
+                    const secretBytes = new TextEncoder().encode(secret);
+                    let bits = '';
+                    for (const b of secretBytes) bits += b.toString(2).padStart(8, '0');
+                    bits = secretBytes.length.toString(2).padStart(16, '0') + bits;
+                    let out = '', bi = 0;
+                    for (const ch of cover) {
+                        if (bi < bits.length && ch.match(/[a-zA-Z]/)) {
+                            if (bits[bi] === '1') {
+                                const code = ch.charCodeAt(0);
+                                if (code >= 65 && code <= 90) out += String.fromCodePoint(0x1D400 + code - 65);
+                                else if (code >= 97 && code <= 122) out += String.fromCodePoint(0x1D41A + code - 97);
+                                else out += ch;
+                            } else { out += ch; }
+                            bi++;
+                        } else { out += ch; }
+                    }
+                    result = out;
+                    stats = `${bi} bits encoded via math bold`;
+
+                } else if (method === 'braille') {
+                    // Each byte maps to Braille pattern U+2800+byte
+                    const secretBytes = new TextEncoder().encode(secret);
+                    const brailleStr = Array.from(secretBytes).map(b => String.fromCodePoint(0x2800 + b)).join('');
+                    result = cover + '\n\n' + brailleStr;
+                    stats = `${secretBytes.length} bytes as Braille patterns`;
+
+                } else if (method === 'emoji') {
+                    // 🔵 = 0, 🔴 = 1
+                    const secretBytes = new TextEncoder().encode(secret);
+                    let bits = '';
+                    for (const b of secretBytes) bits += b.toString(2).padStart(8, '0');
+                    bits = secretBytes.length.toString(2).padStart(16, '0') + bits;
+                    const emojiStr = Array.from(bits).map(b => b === '1' ? '🔴' : '🔵').join('');
+                    result = cover + '\n\n' + emojiStr;
+                    stats = `${bits.length} bits as emoji`;
+
+                } else if (method === 'skintone') {
+                    // 4 skin tones = 2 bits each
+                    const tones = ['\u{1F3FB}', '\u{1F3FC}', '\u{1F3FE}', '\u{1F3FF}'];
+                    const base = '\u{1F44D}'; // thumbs up
+                    const secretBytes = new TextEncoder().encode(secret);
+                    const pairs = [];
+                    for (const b of secretBytes) {
+                        pairs.push((b >> 6) & 3, (b >> 4) & 3, (b >> 2) & 3, b & 3);
+                    }
+                    const emojiStr = pairs.map(p => base + tones[p]).join(' ');
+                    result = cover + '\n\n' + emojiStr;
+                    stats = `${pairs.length} 2-bit pairs as skin tones`;
                 }
 
                 console.log('Encode result length:', result?.length, 'stats:', stats);
@@ -7706,8 +8243,102 @@
                     console.log('Decoding whitespace...');
                     result = decodeWhitespace(input);
                 } else if (method === 'invisible') {
-                    console.log('Decoding invisible ink...');
                     result = decodeInvisibleInk(input);
+
+                } else if (method === 'variation') {
+                    let bits = '';
+                    for (let i = 0; i < input.length; i++) {
+                        const cp = input.charCodeAt(i);
+                        if (cp >= 0xFE00 && cp <= 0xFE0F) bits += '1';
+                        else if (input.charCodeAt(i+1) >= 0xFE00 && input.charCodeAt(i+1) <= 0xFE0F) {}
+                        else if (cp >= 0x21 && cp < 0xFE00 && input[i].match(/[a-zA-Z0-9]/)) bits += '0';
+                    }
+                    if (bits.length >= 16) {
+                        const len = parseInt(bits.slice(0,16), 2);
+                        if (len > 0) { let m=''; for(let i=16;i<16+len*8&&i+8<=bits.length;i+=8) m+=String.fromCharCode(parseInt(bits.slice(i,i+8),2)); result=m; }
+                    }
+
+                } else if (method === 'combining') {
+                    let bits = '';
+                    for (const ch of input) {
+                        if (ch === '\u034F') bits += '1';
+                        else if (ch.match(/[a-zA-Z]/)) bits += '0';
+                    }
+                    if (bits.length >= 16) {
+                        const len = parseInt(bits.slice(0,16), 2);
+                        if (len > 0) { let m=''; for(let i=16;i<16+len*8&&i+8<=bits.length;i+=8) m+=String.fromCharCode(parseInt(bits.slice(i,i+8),2)); result=m; }
+                    }
+
+                } else if (method === 'confusable') {
+                    const map = {' ':'00', '\u2002':'01', '\u2003':'10', '\u2009':'11'};
+                    let bits = '';
+                    for (const ch of input) { if (map[ch]) bits += map[ch]; }
+                    if (bits.length >= 16) {
+                        const len = parseInt(bits.slice(0,16), 2);
+                        if (len > 0) { let m=''; for(let i=16;i<16+len*8&&i+8<=bits.length;i+=8) m+=String.fromCharCode(parseInt(bits.slice(i,i+8),2)); result=m; }
+                    }
+
+                } else if (method === 'directional') {
+                    let bits = '';
+                    for (const ch of input) {
+                        if (ch === '\u202E') bits += '1';
+                        else if (ch === '\u202D') bits += '0';
+                    }
+                    if (bits.length >= 16) {
+                        const len = parseInt(bits.slice(0,16), 2);
+                        if (len > 0) { let m=''; for(let i=16;i<16+len*8&&i+8<=bits.length;i+=8) m+=String.fromCharCode(parseInt(bits.slice(i,i+8),2)); result=m; }
+                    }
+
+                } else if (method === 'hangul') {
+                    let bits = '';
+                    for (const ch of input) {
+                        if (ch === '\u3164') bits += '1';
+                        else if (ch === ' ') bits += '0';
+                    }
+                    if (bits.length >= 16) {
+                        const len = parseInt(bits.slice(0,16), 2);
+                        if (len > 0) { let m=''; for(let i=16;i<16+len*8&&i+8<=bits.length;i+=8) m+=String.fromCharCode(parseInt(bits.slice(i,i+8),2)); result=m; }
+                    }
+
+                } else if (method === 'mathbold') {
+                    let bits = '';
+                    for (const ch of input) {
+                        const cp = ch.codePointAt(0);
+                        if ((cp>=0x1D400&&cp<=0x1D419)||(cp>=0x1D41A&&cp<=0x1D433)) bits += '1';
+                        else if ((cp>=65&&cp<=90)||(cp>=97&&cp<=122)) bits += '0';
+                    }
+                    if (bits.length >= 16) {
+                        const len = parseInt(bits.slice(0,16), 2);
+                        if (len > 0) { let m=''; for(let i=16;i<16+len*8&&i+8<=bits.length;i+=8) m+=String.fromCharCode(parseInt(bits.slice(i,i+8),2)); result=m; }
+                    }
+
+                } else if (method === 'braille') {
+                    const braille = [...input].filter(c => c.codePointAt(0)>=0x2800 && c.codePointAt(0)<=0x28FF);
+                    if (braille.length > 0) {
+                        const bytes = braille.map(c => c.codePointAt(0) - 0x2800);
+                        result = new TextDecoder().decode(new Uint8Array(bytes));
+                    }
+
+                } else if (method === 'emoji') {
+                    let bits = '';
+                    for (const ch of input) {
+                        if (ch === '🔴') bits += '1';
+                        else if (ch === '🔵') bits += '0';
+                    }
+                    if (bits.length >= 16) {
+                        const len = parseInt(bits.slice(0,16), 2);
+                        if (len > 0) { let m=''; for(let i=16;i<16+len*8&&i+8<=bits.length;i+=8) m+=String.fromCharCode(parseInt(bits.slice(i,i+8),2)); result=m; }
+                    }
+
+                } else if (method === 'skintone') {
+                    const toneMap = {0x1F3FB:0, 0x1F3FC:1, 0x1F3FE:2, 0x1F3FF:3};
+                    const pairs = [];
+                    for (const ch of input) { const cp=ch.codePointAt(0); if(toneMap[cp]!==undefined) pairs.push(toneMap[cp]); }
+                    if (pairs.length >= 4) {
+                        const bytes = [];
+                        for (let i=0;i+3<pairs.length;i+=4) bytes.push((pairs[i]<<6)|(pairs[i+1]<<4)|(pairs[i+2]<<2)|pairs[i+3]);
+                        try { result = new TextDecoder('utf-8',{fatal:true}).decode(new Uint8Array(bytes)); } catch(e) {}
+                    }
                 }
 
                 console.log('Decode result:', result);
@@ -7842,12 +8473,20 @@
                         const newDiff = range.lower + embedValue;
                         const signedNewDiff = diff >= 0 ? newDiff : -newDiff;
 
-                        // Calculate new pixel values
+                        // Calculate new pixel values, ensuring no clamping.
+                        // If the difference change would push pixels out of [0,255],
+                        // adjust both pixels to achieve the exact target difference.
                         const diffChange = signedNewDiff - diff;
                         let newP1 = p1 + Math.ceil(diffChange / 2);
                         let newP2 = p2 - Math.floor(diffChange / 2);
 
-                        // Clamp to valid range
+                        // Shift both pixels to stay in [0,255] while preserving difference
+                        if (newP1 < 0) { newP2 += (-newP1); newP1 = 0; }
+                        if (newP2 < 0) { newP1 += (-newP2); newP2 = 0; }
+                        if (newP1 > 255) { newP2 -= (newP1 - 255); newP1 = 255; }
+                        if (newP2 > 255) { newP1 -= (newP2 - 255); newP2 = 255; }
+
+                        // Final clamp as safety net
                         newP1 = Math.max(0, Math.min(255, newP1));
                         newP2 = Math.max(0, Math.min(255, newP2));
 
@@ -8330,10 +8969,10 @@
                 return doAudioEncode();
             }
 
-            // Check for GODMODE activation trigger
+            // Check for SPECTER activation trigger
             if (state.payloadMode === 'text') {
                 const text = document.getElementById('encode-text').value;
-                if (text.includes('{GODMODE:ENABLED}')) {
+                if (text.includes('{SPECTER:ENABLED}')) {
                     activateGodmode();
                     document.getElementById('encode-text').value = '';
                     return;
@@ -10632,7 +11271,7 @@
                 document.getElementById('matryoshka-decode-btn').classList.remove('hidden');
             }
 
-            // Activate GODMODE
+            // Activate SPECTER
             if (!state.godmodeActive) {
                 state.godmodeActive = true;
                 const godTab = document.getElementById('godmode-tab-btn');
@@ -10645,7 +11284,7 @@
             trigger.classList.add('unlock-all-flash');
             setTimeout(() => trigger.classList.remove('unlock-all-flash'), 600);
 
-            notify('🔓 ALL EASTER EGGS UNLOCKED — Text Lab + Nested Stegg + GODMODE', 'success');
+            notify('🔓 ALL EASTER EGGS UNLOCKED — Text Lab + Nested Stegg + SPECTER', 'success');
         }
 
         function updateMatryoshkaDepth(value) {
@@ -10918,7 +11557,7 @@
             // Show the indicator
             document.getElementById('godmode-indicator').classList.remove('hidden');
 
-            notify('👁 GODMODE ENABLED 👁', 'success');
+            notify('🧬 SPECTER ENABLED 👁', 'success');
         }
 
         function deactivateGodmode() {
@@ -10934,7 +11573,7 @@
             // Switch back to encode tab
             document.querySelector('.tab[data-tab="encode"]').click();
 
-            notify('👁 GODMODE deactivated', 'info');
+            notify('🧬 SPECTER deactivated', 'info');
         }
 
         function setCipherMode(mode) {
@@ -11303,7 +11942,7 @@
                 headerMagic = [0x47, 0x4F, 0x44, 0x4D]; // "GODM"
             }
 
-            // Add GODMODE header
+            // Add SPECTER header
             const header = new Uint8Array(12);
             header.set(headerMagic);
             header[4] = (payload.length >> 24) & 0xFF;
@@ -11460,7 +12099,7 @@
                 header = bitsToData(bits.slice(0, 96));
 
                 if (!checkMagic(header, GODM_MAGIC)) {
-                    throw new Error('GODMODE header not found - wrong pattern or password?');
+                    throw new Error('SPECTER header not found - wrong pattern or password?');
                 }
             }
 
@@ -11561,7 +12200,7 @@
             return block;
         }
 
-        // GODMODE DCT - Uses same proven DCT method as regular DCT, but with redundancy
+        // SPECTER DCT - Uses same proven DCT method as regular DCT, but with redundancy
         // for surviving social media compression
 
         // Robust DCT configuration - designed to survive X/Twitter QF 85 compression
@@ -11789,7 +12428,7 @@
                             header[2] === 0x43 && header[3] === 0x54;
 
             if (!isRobust && !isLegacy) {
-                throw new Error('GODMODE DCT header not found - image may be corrupted or not encoded. Got: ' +
+                throw new Error('SPECTER DCT header not found - image may be corrupted or not encoded. Got: ' +
                     Array.from(header.slice(0, 4)).map(b => b.toString(16).padStart(2, '0')).join(' '));
             }
 
@@ -11915,7 +12554,7 @@
 
                 const modeInfo = embedMode === 'dct' ? 'DCT (compression-resistant)' : `LSB ${density}% density`;
                 const ghostInfo = ghost ? ' + 👻 Ghost Mode' : '';
-                notify(`👁 GODMODE encoded! ${steps.length}-step cipher, ${modeInfo}${ghostInfo}`, 'success');
+                notify(`🧬 SPECTER encoded! ${steps.length}-step cipher, ${modeInfo}${ghostInfo}`, 'success');
 
             } catch (err) {
                 notify('Encode error: ' + err.message, 'error');
@@ -11991,7 +12630,7 @@
                     state.godmodeDecodedFilename = 'decoded.txt';
                 }
 
-                notify(`👁 GODMODE decoded (${usedMode} mode)!`, 'success');
+                notify(`🧬 SPECTER decoded (${usedMode} mode)!`, 'success');
 
             } catch (err) {
                 notify('Decode error: ' + err.message, 'error');
@@ -14966,17 +15605,51 @@
             // === DECODING TOOLS ===
             smart_scan: {
                 name: 'smart_scan',
-                description: 'Auto-detect steganography using multiple methods (LSB, DCT, Chroma). Returns confidence scores for each method.',
+                description: 'Auto-detect AND auto-decode steganography. Tests ALL 120 channel/bit combos for STEG headers, plus DCT and Chroma. When a STEG header is found, automatically decodes the hidden payload — no need to call extract_artifact separately.',
                 parameters: {},
                 execute: async (params, canvas) => {
                     const results = await smartScan(canvas);
-                    const found = results.filter(r => r.hasHeader || r.confidence > 30);
+                    const found = results.filter(r => r.hasHeader || r.confidence >= 50);
+
+                    // Check if any result has auto-extracted payload
+                    const decoded = found.find(r => r.autoExtracted);
+                    if (decoded && decoded.autoExtracted) {
+                        const ae = decoded.autoExtracted;
+                        // Create artifact for download
+                        try {
+                            const data = new TextEncoder().encode(ae.text);
+                            displayArtifact({
+                                id: Date.now(),
+                                method: `LSB ${ae.channelStr} ${ae.bits}-bit (STEG auto-decode)`,
+                                size: data.length,
+                                format: 'TEXT',
+                                data: data,
+                                preview: ae.text.slice(0, 200)
+                            });
+                        } catch (e) {}
+                        return {
+                            success: true,
+                            steg_found: true,
+                            decoded_payload: ae.text.slice(0, 500),
+                            payload_size: ae.size,
+                            encoding: `${ae.channelStr} ${ae.bits}-bit LSB`,
+                            message: `DECODED! Hidden message found (${ae.channelStr} ${ae.bits}-bit, ${ae.size} bytes): ${ae.text.slice(0, 100)}`,
+                            other_findings: found.filter(r => !r.autoExtracted).map(f => ({
+                                method: f.name, status: f.status, confidence: f.confidence
+                            }))
+                        };
+                    }
+
                     return {
                         success: found.length > 0,
-                        data: found.map(f => ({ method: f.name, status: f.status, confidence: f.confidence, preview: f.preview?.slice(0, 100) })),
+                        steg_found: false,
+                        data: found.map(f => ({
+                            method: f.name, status: f.status, confidence: f.confidence,
+                            preview: f.preview?.slice(0, 100)
+                        })),
                         summary: found.length > 0
                             ? found.map(f => `${f.name}: ${f.status} (${f.confidence}%)`).join(', ')
-                            : 'No steganography detected'
+                            : 'No steganography detected in 120 channel/bit combinations'
                     };
                 }
             },
@@ -16477,6 +17150,76 @@
                 }
             },
 
+            rs_analysis: {
+                name: 'rs_analysis',
+                description: 'RS (Regular-Singular) Analysis — the GOLD STANDARD for LSB steganography detection. More accurate than chi-square or histogram analysis. Measures how LSB flipping affects pixel pair smoothness to estimate embedding rate per channel.',
+                parameters: {},
+                execute: async (params, canvas) => {
+                    const ctx = canvas.getContext('2d');
+                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const px = imgData.data;
+                    const n = canvas.width * canvas.height;
+                    const results = {};
+                    for (let ch = 0; ch < 3; ch++) {
+                        const chName = ['Red','Green','Blue'][ch];
+                        const pairs = Math.floor(n / 2);
+                        let dOrig = 0, dFlip = 0;
+                        for (let i = 0; i < pairs; i++) {
+                            const p1 = px[(i*2)*4+ch], p2 = px[(i*2+1)*4+ch];
+                            dOrig += Math.abs(p1 - p2);
+                            dFlip += Math.abs((p1 ^ 1) - p2);
+                        }
+                        dOrig /= pairs; dFlip /= pairs;
+                        const ratio = dOrig > 0 ? dFlip / dOrig : 1;
+                        const rate = Math.max(0, Math.min(1, (ratio - 1) * 2));
+                        results[chName] = { rs_ratio: Math.round(ratio*1000)/1000, estimated_rate: Math.round(rate*1000)/1000, suspicious: rate > 0.05 };
+                    }
+                    const maxRate = Math.max(...Object.values(results).map(r => r.estimated_rate));
+                    return {
+                        success: true, channels: results,
+                        overall_rate: maxRate,
+                        suspicious: maxRate > 0.05,
+                        message: `RS Analysis: ${(maxRate*100).toFixed(1)}% estimated embedding. ` +
+                            (maxRate > 0.1 ? 'HIGH probability of LSB steg.' : maxRate > 0.03 ? 'MODERATE indicators.' : 'Likely clean.')
+                    };
+                }
+            },
+
+            sample_pairs_analysis: {
+                name: 'sample_pairs_analysis',
+                description: 'Sample Pairs Analysis (SPA) — complementary to RS analysis. Examines pixel pair statistics to detect LSB embedding. Catches patterns that RS and chi-square miss.',
+                parameters: {},
+                execute: async (params, canvas) => {
+                    const ctx = canvas.getContext('2d');
+                    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const px = imgData.data;
+                    const n = canvas.width * canvas.height;
+                    const results = {};
+                    for (let ch = 0; ch < 3; ch++) {
+                        const chName = ['Red','Green','Blue'][ch];
+                        let xCount = 0, yCount = 0;
+                        for (let i = 0; i < n - 1; i++) {
+                            const h1 = px[i*4+ch] >> 1, h2 = px[(i+1)*4+ch] >> 1;
+                            if (h1 === h2) xCount++;
+                            else if (Math.abs(h1-h2) === 1) yCount++;
+                        }
+                        const total = n - 1;
+                        const xr = xCount/total, yr = yCount/total;
+                        const spa = (xr+yr) > 0 ? Math.abs(xr-yr)/(xr+yr) : 0;
+                        const rate = Math.max(0, Math.min(1, 1 - spa * 3));
+                        results[chName] = { spa_ratio: Math.round(spa*1000)/1000, estimated_rate: Math.round(rate*1000)/1000, suspicious: spa < 0.1 };
+                    }
+                    const maxRate = Math.max(...Object.values(results).map(r => r.estimated_rate));
+                    return {
+                        success: true, channels: results,
+                        overall_rate: maxRate,
+                        suspicious: maxRate > 0.2,
+                        message: `SPA: ${(maxRate*100).toFixed(1)}% estimated embedding. ` +
+                            (maxRate > 0.5 ? 'HIGH probability.' : maxRate > 0.2 ? 'MODERATE.' : 'Likely clean.')
+                    };
+                }
+            },
+
             analyze_histogram: {
                 name: 'analyze_histogram',
                 description: 'Analyze image histogram for statistical anomalies that might indicate steganography.',
@@ -16538,7 +17281,13 @@
                     passwords: { type: 'array', description: 'List of passwords to try', default: ['password', '123456', 'secret', 'hidden', 'steg', 'key'] }
                 },
                 execute: async (params, canvas) => {
-                    const passwords = params.passwords || ['password', '123456', 'secret', 'hidden', 'steg', 'key', 'flag', 'ctf'];
+                    const passwords = params.passwords || [
+                        'password', '123456', 'secret', 'hidden', 'steg', 'key', 'flag', 'ctf',
+                        'steganography', 'admin', 'test', '1234', 'pass', 'stego', 'hide',
+                        'encrypted', 'decode', 'unlock', 'open', 'master', 'root', 'user',
+                        'abc123', 'letmein', 'welcome', 'monkey', 'dragon', 'login',
+                        'ST3GG', 'st3gg', 'pliny', 'PLINY', 'love', 'LOVE',
+                    ];
                     const results = [];
 
                     // First try to find header for correct extraction
@@ -16616,6 +17365,195 @@
                 }
             },
 
+            // === RED TEAM ENCODING TOOLS ===
+
+            encode_lsb: {
+                name: 'encode_lsb',
+                description: 'Encode a secret message into the carrier image using LSB steganography. Creates a downloadable stego image. Use this for red team payload generation, CTF challenge creation, or steganography research.',
+                parameters: {
+                    message: { type: 'string', description: 'The secret message to hide' },
+                    channels: { type: 'string', description: 'Channel preset (R, G, B, RGB, RGBA, etc)', default: 'RGB' },
+                    bits: { type: 'number', description: 'Bits per channel (1-8)', default: 1 }
+                },
+                execute: async (params, canvas) => {
+                    if (!params.message) return { success: false, error: 'No message provided' };
+                    const channelName = params.channels || 'RGB';
+                    const bits = params.bits || 1;
+                    const msgBytes = new TextEncoder().encode(params.message);
+
+                    // Work on a copy
+                    const stegCanvas = document.createElement('canvas');
+                    stegCanvas.width = canvas.width;
+                    stegCanvas.height = canvas.height;
+                    stegCanvas.getContext('2d').drawImage(canvas, 0, 0);
+
+                    try {
+                        await encode(stegCanvas, msgBytes, channelName, bits);
+
+                        // Create downloadable PNG
+                        const blob = await new Promise(r => stegCanvas.toBlob(r, 'image/png'));
+                        const url = URL.createObjectURL(blob);
+
+                        // Display as artifact
+                        const pngData = new Uint8Array(await blob.arrayBuffer());
+                        displayArtifact({
+                            id: Date.now(),
+                            method: `LSB Encode (${channelName} ${bits}-bit)`,
+                            size: pngData.length,
+                            format: 'PNG',
+                            data: pngData,
+                            preview: `Encoded "${params.message.slice(0, 50)}${params.message.length > 50 ? '...' : ''}" into ${canvas.width}x${canvas.height} image`
+                        });
+
+                        return {
+                            success: true,
+                            method: `LSB ${channelName} ${bits}-bit`,
+                            messageSize: msgBytes.length,
+                            imageSize: pngData.length,
+                            message: `Encoded ${msgBytes.length} bytes into image. Download the PNG artifact.`
+                        };
+                    } catch (e) {
+                        return { success: false, error: e.message };
+                    }
+                }
+            },
+
+            encode_pvd: {
+                name: 'encode_pvd',
+                description: 'Encode a secret message using PVD (Pixel Value Differencing) steganography. More resistant to histogram analysis than LSB.',
+                parameters: {
+                    message: { type: 'string', description: 'Secret message to hide' },
+                    direction: { type: 'string', description: 'horizontal, vertical, or both', default: 'horizontal' },
+                    rangeType: { type: 'string', description: 'wu-tsai, wide, or narrow', default: 'wu-tsai' }
+                },
+                execute: async (params, canvas) => {
+                    if (!params.message) return { success: false, error: 'No message provided' };
+                    const msgBytes = new TextEncoder().encode(params.message);
+                    const stegCanvas = document.createElement('canvas');
+                    stegCanvas.width = canvas.width;
+                    stegCanvas.height = canvas.height;
+                    stegCanvas.getContext('2d').drawImage(canvas, 0, 0);
+                    try {
+                        await pvdEncode(stegCanvas, msgBytes, params.direction || 'horizontal', params.rangeType || 'wu-tsai');
+                        const blob = await new Promise(r => stegCanvas.toBlob(r, 'image/png'));
+                        const pngData = new Uint8Array(await blob.arrayBuffer());
+                        displayArtifact({
+                            id: Date.now(), method: `PVD Encode (${params.direction || 'horizontal'}, ${params.rangeType || 'wu-tsai'})`,
+                            size: pngData.length, format: 'PNG', data: pngData,
+                            preview: `PVD-encoded "${params.message.slice(0, 50)}"`
+                        });
+                        return { success: true, method: 'PVD', messageSize: msgBytes.length, imageSize: pngData.length, message: 'PVD encoded. Download artifact.' };
+                    } catch (e) { return { success: false, error: e.message }; }
+                }
+            },
+
+            encode_dct: {
+                name: 'encode_dct',
+                description: 'Encode a secret message using DCT steganography. Survives JPEG compression at quality 70%+. Ideal for social media exfiltration testing.',
+                parameters: {
+                    message: { type: 'string', description: 'Secret message to hide' },
+                    robustness: { type: 'string', description: 'low, medium, or high', default: 'medium' }
+                },
+                execute: async (params, canvas) => {
+                    if (!params.message) return { success: false, error: 'No message provided' };
+                    const msgBytes = new TextEncoder().encode(params.message);
+                    const stegCanvas = document.createElement('canvas');
+                    stegCanvas.width = canvas.width;
+                    stegCanvas.height = canvas.height;
+                    stegCanvas.getContext('2d').drawImage(canvas, 0, 0);
+                    try {
+                        await dctEncode(stegCanvas, msgBytes, params.robustness || 'medium');
+                        const blob = await new Promise(r => stegCanvas.toBlob(r, 'image/png'));
+                        const pngData = new Uint8Array(await blob.arrayBuffer());
+                        displayArtifact({
+                            id: Date.now(), method: `DCT Encode (${params.robustness || 'medium'})`,
+                            size: pngData.length, format: 'PNG', data: pngData,
+                            preview: `DCT-encoded "${params.message.slice(0, 50)}" (survives JPEG)`
+                        });
+                        return { success: true, method: 'DCT', messageSize: msgBytes.length, imageSize: pngData.length, message: 'DCT encoded. Survives JPEG recompression. Download artifact.' };
+                    } catch (e) { return { success: false, error: e.message }; }
+                }
+            },
+
+            encode_chroma: {
+                name: 'encode_chroma',
+                description: 'Encode a secret message in chrominance channels (Cb/Cr). Hides data in color information rather than brightness.',
+                parameters: {
+                    message: { type: 'string', description: 'Secret message to hide' },
+                    channel: { type: 'string', description: 'cb, cr, or both', default: 'both' }
+                },
+                execute: async (params, canvas) => {
+                    if (!params.message) return { success: false, error: 'No message provided' };
+                    const msgBytes = new TextEncoder().encode(params.message);
+                    const stegCanvas = document.createElement('canvas');
+                    stegCanvas.width = canvas.width;
+                    stegCanvas.height = canvas.height;
+                    stegCanvas.getContext('2d').drawImage(canvas, 0, 0);
+                    try {
+                        await chromaEncode(stegCanvas, msgBytes, 'ycbcr', params.channel || 'both');
+                        const blob = await new Promise(r => stegCanvas.toBlob(r, 'image/png'));
+                        const pngData = new Uint8Array(await blob.arrayBuffer());
+                        displayArtifact({
+                            id: Date.now(), method: `Chroma Encode (${params.channel || 'both'})`,
+                            size: pngData.length, format: 'PNG', data: pngData,
+                            preview: `Chroma-encoded "${params.message.slice(0, 50)}"`
+                        });
+                        return { success: true, method: 'Chroma', messageSize: msgBytes.length, imageSize: pngData.length, message: 'Chroma encoded. Download artifact.' };
+                    } catch (e) { return { success: false, error: e.message }; }
+                }
+            },
+
+            encode_text_steg: {
+                name: 'encode_text_steg',
+                description: 'Encode a secret message in text using various Unicode steganography techniques. Returns the stego text as a downloadable artifact. Methods: zerowidth (invisible chars), homoglyph (Cyrillic lookalikes), whitespace (trailing spaces/tabs).',
+                parameters: {
+                    message: { type: 'string', description: 'Secret message to hide' },
+                    cover: { type: 'string', description: 'Cover text to hide the message in', default: 'The quick brown fox jumps over the lazy dog. This is a perfectly normal text document with nothing hidden in it whatsoever. Steganography is the practice of concealing messages within other non-secret data.' },
+                    method: { type: 'string', description: 'zerowidth, homoglyph, or whitespace', default: 'zerowidth' }
+                },
+                execute: async (params, canvas) => {
+                    if (!params.message) return { success: false, error: 'No message provided' };
+                    const secret = params.message;
+                    const cover = params.cover || 'The quick brown fox jumps over the lazy dog.';
+                    const method = params.method || 'zerowidth';
+                    let result;
+
+                    try {
+                        if (method === 'zerowidth') {
+                            const ZWSP = '\u200B', ZWNJ = '\u200C', ZWJ = '\u200D';
+                            const secretBytes = new TextEncoder().encode(secret);
+                            let binary = '';
+                            for (const b of secretBytes) binary += b.toString(2).padStart(8, '0');
+                            let zw = ZWJ;
+                            for (const bit of binary) zw += bit === '0' ? ZWSP : ZWNJ;
+                            zw += ZWJ;
+                            result = cover[0] + zw + cover.slice(1);
+                        } else if (method === 'homoglyph') {
+                            result = encodeHomoglyph(secret, cover).encoded;
+                        } else if (method === 'whitespace') {
+                            result = encodeWhitespace(secret, cover).encoded;
+                        } else {
+                            return { success: false, error: `Unknown method: ${method}` };
+                        }
+
+                        const data = new TextEncoder().encode(result);
+                        displayArtifact({
+                            id: Date.now(), method: `Text Steg (${method})`,
+                            size: data.length, format: 'TEXT', data: data,
+                            preview: result.slice(0, 200)
+                        });
+
+                        return {
+                            success: true,
+                            method: method,
+                            coverLength: cover.length,
+                            stegoLength: result.length,
+                            message: `Encoded "${secret.slice(0, 30)}" using ${method}. The stego text looks identical to normal text. Download artifact.`
+                        };
+                    } catch (e) { return { success: false, error: e.message }; }
+                }
+            },
+
             get_image_info: {
                 name: 'get_image_info',
                 description: 'Get detailed information about the image including dimensions, capacity, and color statistics.',
@@ -16651,11 +17589,11 @@
                 description: 'EXHAUSTIVE brute-force fuzzing of ALL channel/bit combinations. Tries 160+ extraction methods and reports anything with data. Takes 10-30 seconds.',
                 parameters: {
                     includeAlpha: { type: 'boolean', description: 'Include alpha channel combinations', default: false },
-                    maxBits: { type: 'number', description: 'Max bits per channel to try (1-8)', default: 4 }
+                    maxBits: { type: 'number', description: 'Max bits per channel to try (1-8)', default: 8 }
                 },
                 execute: async (params, canvas) => {
                     const includeAlpha = params.includeAlpha || false;
-                    const maxBits = Math.min(params.maxBits || 4, 8);
+                    const maxBits = Math.min(params.maxBits || 8, 8);
                     const findings = [];
                     let tested = 0;
 
@@ -16696,11 +17634,21 @@
                                 const comboName = channels.map(c => channelNames[c]).join('') + `-${bits}bit`;
 
                                 if (header) {
+                                    // Auto-decode when STEG header found
+                                    let decodedPreview = null;
+                                    try {
+                                        const chName = channels.map(c => channelNames[c]).join('');
+                                        const decoded = await decode(canvas, chName, bits);
+                                        if (decoded && decoded.length > 0) {
+                                            decodedPreview = new TextDecoder('utf-8', { fatal: false }).decode(decoded).slice(0, 200);
+                                        }
+                                    } catch (e) {}
                                     findings.push({
                                         combo: comboName,
                                         type: 'STEG_HEADER',
                                         confidence: 100,
-                                        info: `STEG v${header.version}, ${formatSize(header.originalLength)}`
+                                        info: `STEG v${header.version}, ${formatSize(header.originalLength)}`,
+                                        decoded: decodedPreview
                                     });
                                 } else if (detectedFormat) {
                                     findings.push({
@@ -16756,14 +17704,68 @@
                     }
                     tested += 4; // DCT + 3 chroma
 
+                    // Try palette decode (for GIF/indexed PNG)
+                    for (const mode of ['index', 'color']) {
+                        try {
+                            tested++;
+                            const palData = await paletteDecode(canvas, mode);
+                            if (palData && palData.length > 0) {
+                                const textAnalysis = detectCoherentText(palData);
+                                if (textAnalysis.isText || textAnalysis.confidence > 50) {
+                                    findings.push({
+                                        combo: `Palette-${mode}`,
+                                        type: 'TEXT',
+                                        confidence: textAnalysis.confidence,
+                                        preview: textAnalysis.preview
+                                    });
+                                }
+                            }
+                        } catch (e) {}
+                    }
+
+                    // Also try PVD with all range tables
+                    for (const rt of ['wu-tsai', 'wide', 'narrow']) {
+                        for (const dir of ['horizontal', 'vertical']) {
+                            try {
+                                tested++;
+                                const pvdData = await pvdDecode(canvas, dir, rt);
+                                if (pvdData && pvdData.length > 0) {
+                                    const textAnalysis = detectCoherentText(pvdData);
+                                    if (textAnalysis.isText || textAnalysis.confidence > 50) {
+                                        findings.push({
+                                            combo: `PVD-${dir}-${rt}`,
+                                            type: 'TEXT',
+                                            confidence: textAnalysis.confidence,
+                                            preview: textAnalysis.preview
+                                        });
+                                    }
+                                }
+                            } catch (e) {}
+                        }
+                    }
+
                     // Sort by confidence
                     findings.sort((a, b) => b.confidence - a.confidence);
+
+                    // Surface any auto-decoded STEG payloads prominently
+                    const stegHits = findings.filter(f => f.type === 'STEG_HEADER' && f.decoded);
+                    if (stegHits.length > 0) {
+                        return {
+                            success: true,
+                            steg_found: true,
+                            decoded_payload: stegHits[0].decoded,
+                            encoding: stegHits[0].combo,
+                            combinationsTested: tested,
+                            message: `DECODED! ${stegHits[0].combo}: ${stegHits[0].decoded.slice(0, 100)}`,
+                            other_findings: findings.filter(f => f !== stegHits[0]).slice(0, 10)
+                        };
+                    }
 
                     return {
                         success: findings.length > 0,
                         combinationsTested: tested,
                         findingsCount: findings.length,
-                        findings: findings.slice(0, 20), // Top 20
+                        findings: findings.slice(0, 20),
                         summary: findings.length > 0
                             ? `Found ${findings.length} potential hits. Best: ${findings[0].combo} (${findings[0].type}, ${findings[0].confidence}%)`
                             : `No data found in ${tested} combinations`
@@ -16790,7 +17792,7 @@
 
                     try {
                         if (method === 'auto') {
-                            // Try full decode with header first
+                            // Try full STEG header decode first
                             try {
                                 extractedData = await decode(canvas);
                                 const headerResult = findStegHeader(canvas);
@@ -16800,9 +17802,88 @@
                                     extractionInfo = 'Auto (STEG decoded)';
                                 }
                             } catch (e) {
-                                // No header found, try raw extraction with best guess
-                                extractedData = extractRawBits(canvas, [0,1,2], 1, maxBytes);
-                                extractionInfo = 'Auto (raw RGB 1-bit fallback)';
+                                // No STEG header — try headerless methods in order
+                                extractedData = null;
+                                extractionInfo = '';
+
+                                // 1. Try DCT (has its own DCTS header)
+                                if (!extractedData) {
+                                    try {
+                                        const dctData = await dctDecode(canvas);
+                                        if (dctData && dctData.length > 0) {
+                                            const check = detectCoherentText(dctData);
+                                            if (check.isText || check.confidence > 40) {
+                                                extractedData = dctData;
+                                                extractionInfo = 'Auto (DCT)';
+                                            }
+                                        }
+                                    } catch (de) {}
+                                }
+
+                                // 2. Try PVD (all range/direction combos)
+                                if (!extractedData) {
+                                    for (const rt of ['wu-tsai', 'wide', 'narrow']) {
+                                        for (const dir of ['horizontal', 'vertical']) {
+                                            try {
+                                                const pvdData = await pvdDecode(canvas, dir, rt);
+                                                if (pvdData && pvdData.length > 0) {
+                                                    const check = detectCoherentText(pvdData);
+                                                    if (check.isText || check.confidence > 50) {
+                                                        extractedData = pvdData;
+                                                        extractionInfo = `Auto (PVD ${dir} ${rt})`;
+                                                        break;
+                                                    }
+                                                }
+                                            } catch (pe) {}
+                                        }
+                                        if (extractedData) break;
+                                    }
+                                }
+
+                                // 3. Try Chroma
+                                if (!extractedData) {
+                                    for (const ch of ['both', 'cb', 'cr']) {
+                                        try {
+                                            const chromaData = await chromaDecode(canvas, 'ycbcr', ch);
+                                            if (chromaData && chromaData.length > 0) {
+                                                const check = detectCoherentText(chromaData);
+                                                if (check.isText || check.confidence > 50) {
+                                                    extractedData = chromaData;
+                                                    extractionInfo = `Auto (Chroma ${ch})`;
+                                                    break;
+                                                }
+                                            }
+                                        } catch (ce) {}
+                                    }
+                                }
+
+                                // 4. Try Palette
+                                if (!extractedData) {
+                                    for (const mode of ['index', 'color']) {
+                                        try {
+                                            const palData = await paletteDecode(canvas, mode);
+                                            if (palData && palData.length > 0) {
+                                                const check = detectCoherentText(palData);
+                                                if (check.isText || check.confidence > 50) {
+                                                    extractedData = palData;
+                                                    extractionInfo = `Auto (Palette ${mode})`;
+                                                    break;
+                                                }
+                                            }
+                                        } catch (ple) {}
+                                    }
+                                }
+
+                                // 5. Last resort: raw LSB but only if it looks meaningful
+                                if (!extractedData) {
+                                    const raw = extractRawBits(canvas, [0,1,2], 1, maxBytes);
+                                    const check = detectCoherentText(raw);
+                                    if (check.isText) {
+                                        extractedData = raw;
+                                        extractionInfo = 'Auto (raw RGB 1-bit)';
+                                    }
+                                    // If not text, leave extractedData null — no garbage artifact
+                                }
                             }
                         } else if (method === 'lsb') {
                             const channels = params.channels || [0,1,2];
@@ -16823,6 +17904,24 @@
                             const chromaChan = params.chromaChannel || 'both';
                             extractedData = await chromaDecode(canvas, 'ycbcr', chromaChan);
                             extractionInfo = `Chroma ${chromaChan}`;
+                        } else if (method === 'pvd') {
+                            const dir = params.direction || 'horizontal';
+                            const rt = params.rangeType || 'wu-tsai';
+                            extractedData = await pvdDecode(canvas, dir, rt);
+                            extractionInfo = `PVD (${dir}, ${rt})`;
+                        } else if (method === 'f5') {
+                            if (typeof f5stego !== 'undefined' && fileBytes) {
+                                const stego = new f5stego(params.password || '');
+                                const raw = stego.extract(fileBytes);
+                                extractedData = raw ? new Uint8Array(raw) : null;
+                                extractionInfo = 'F5 JPEG';
+                            }
+                        } else if (method === 'spread') {
+                            extractedData = await spreadDecode(canvas, params.password || '', params.spreadFactor || 16);
+                            extractionInfo = 'Spread spectrum';
+                        } else if (method === 'palette') {
+                            extractedData = await paletteDecode(canvas, params.mode || 'index');
+                            extractionInfo = `Palette (${params.mode || 'index'})`;
                         }
 
                         if (!extractedData || extractedData.length === 0) {
@@ -16844,20 +17943,35 @@
                             GIF: extractedData[0] === 0x47 && extractedData[1] === 0x49 && extractedData[2] === 0x46
                         };
                         const detectedFormat = Object.entries(magics).find(([k,v]) => v)?.[0];
-                        const textAnalysis = detectCoherentText(extractedData);
 
-                        // Create artifact and add to UI
+                        // For artifact display, use simple printability check
+                        // (detectCoherentText is too strict — requires common English words)
+                        let isReadableText = false;
+                        let textPreview = '';
+                        try {
+                            const decoded = new TextDecoder('utf-8', { fatal: true }).decode(extractedData);
+                            const printable = [...decoded].filter(c => c.charCodeAt(0) >= 32 || '\n\r\t'.includes(c)).length;
+                            isReadableText = printable > decoded.length * 0.8 && decoded.length > 0;
+                            if (isReadableText) textPreview = decoded;
+                        } catch (e) {
+                            // Not valid UTF-8
+                        }
+
                         const artifact = {
                             id: Date.now(),
                             method: extractionInfo,
                             size: extractedData.length,
-                            format: detectedFormat || (textAnalysis.isText ? 'TEXT' : 'BINARY'),
+                            format: detectedFormat || (isReadableText ? 'TEXT' : 'BINARY'),
                             data: extractedData,
-                            preview: textAnalysis.isText ? textAnalysis.preview : Array.from(extractedData.slice(0, 64)).map(b => b.toString(16).padStart(2, '0')).join(' ')
+                            preview: isReadableText
+                                ? textPreview.slice(0, 200)
+                                : Array.from(extractedData.slice(0, 64)).map(b => b.toString(16).padStart(2, '0')).join(' ')
                         };
 
-                        // Add to UI immediately
-                        displayArtifact(artifact);
+                        // Only display artifact if it's meaningful data — not raw noise from fallback
+                        if (detectedFormat || isReadableText || extractionInfo.includes('STEG')) {
+                            displayArtifact(artifact);
+                        }
 
                         return {
                             success: true,
@@ -17154,6 +18268,27 @@
                         const trailing = bytes.slice(eofOffset, Math.min(eofOffset + 1024, bytes.length));
                         const textAnalysis = detectCoherentText(trailing);
 
+                        // Auto-create artifact for trailing data
+                        let isReadable = false;
+                        let textPreview = '';
+                        try {
+                            const decoded = new TextDecoder('utf-8', { fatal: true }).decode(trailing);
+                            const printable = [...decoded].filter(c => c.charCodeAt(0) >= 32 || '\n\r\t'.includes(c)).length;
+                            isReadable = printable > decoded.length * 0.5 && decoded.length > 0;
+                            if (isReadable) textPreview = decoded;
+                        } catch (e) {}
+
+                        if (isReadable || textAnalysis.isText) {
+                            displayArtifact({
+                                id: Date.now(),
+                                method: `Trailing data after ${eofMarker}`,
+                                size: trailing.length,
+                                format: 'TEXT',
+                                data: trailing,
+                                preview: textPreview || textAnalysis.preview || ''
+                            });
+                        }
+
                         // Check for embedded file signatures in trailing data
                         const magics = {
                             PNG: trailing[0] === 0x89 && trailing[1] === 0x50 && trailing[2] === 0x4E,
@@ -17187,14 +18322,14 @@
 
             godmode_detect: {
                 name: 'godmode_detect',
-                description: 'Detect GODMODE channel cipher steganography. Tries common channel-hopping patterns and passwords to find cross-channel hidden data.',
+                description: 'Detect SPECTER channel cipher steganography. Tries common channel-hopping patterns and passwords to find cross-channel hidden data.',
                 parameters: {
-                    passwords: { type: 'array', description: 'Passwords to try for GODMODE', default: ['', 'password', 'secret', '1234', 'godmode', 'key'] }
+                    passwords: { type: 'array', description: 'Passwords to try for SPECTER', default: ['', 'password', 'secret', '1234', 'godmode', 'key'] }
                 },
                 execute: async (params, canvas) => {
                     const passwords = params.passwords || ['', 'password', 'secret', '1234', 'godmode', 'key'];
                     const results = [];
-                    // Common GODMODE patterns
+                    // Common SPECTER patterns
                     const patterns = [
                         'R1-G1-B1', 'R2-G2-B2', 'R1-G2-B1', 'R2-G1-B2',
                         'R1-B1-G1', 'G1-R1-B1', 'B1-G1-R1',
@@ -17245,7 +18380,7 @@
 
                             // Check for STEG header
                             if (byteData[0] === 0x53 && byteData[1] === 0x54 && byteData[2] === 0x45 && byteData[3] === 0x47) {
-                                results.push({ pattern, status: 'STEG_HEADER_FOUND', password: '', note: 'GODMODE data with STEG header!' });
+                                results.push({ pattern, status: 'STEG_HEADER_FOUND', password: '', note: 'SPECTER data with STEG header!' });
                                 continue;
                             }
 
@@ -17273,8 +18408,8 @@
                         patternsTested: patterns.length,
                         findings: results,
                         summary: results.length > 0
-                            ? `GODMODE detected! ${results.length} pattern(s) found data: ${results.map(r => r.pattern).join(', ')}`
-                            : `No GODMODE data found in ${patterns.length} patterns`
+                            ? `SPECTER detected! ${results.length} pattern(s) found data: ${results.map(r => r.pattern).join(', ')}`
+                            : `No SPECTER data found in ${patterns.length} patterns`
                     };
                 }
             },
@@ -17457,6 +18592,511 @@
                         summary: embedded.length > 0
                             ? `Found ${embedded.length} embedded file(s): ${embedded.map(f => `${f.format}@${f.offset}`).join(', ')}`
                             : 'No embedded files found'
+                    };
+                }
+            },
+
+            raw_lsb_analyze: {
+                name: 'raw_lsb_analyze',
+                description: 'Extract raw LSB bytes from specific channels and present them for YOUR analysis. Unlike lsb_extract which tries to decode, this gives you the raw first 256 bytes as hex + ASCII for you to examine with your own intelligence. Use this when automated decoding fails but you suspect data is present.',
+                parameters: {
+                    channels: { type: 'array', description: 'Channel indices [0=R, 1=G, 2=B, 3=A]', default: [0,1,2] },
+                    bits: { type: 'number', description: 'Bits per channel (1-8)', default: 1 }
+                },
+                execute: async (params, canvas) => {
+                    const channels = params.channels || [0,1,2];
+                    const bits = params.bits || 1;
+                    const raw = extractRawBits(canvas, channels, bits, 256);
+                    if (!raw || raw.length === 0) return { success: false, error: 'No data extracted' };
+
+                    // Format as hex dump for LLM analysis
+                    let hexDump = '';
+                    let asciiDump = '';
+                    for (let i = 0; i < Math.min(raw.length, 256); i++) {
+                        hexDump += raw[i].toString(16).padStart(2, '0') + ' ';
+                        asciiDump += (raw[i] >= 32 && raw[i] < 127) ? String.fromCharCode(raw[i]) : '.';
+                        if ((i + 1) % 16 === 0) {
+                            hexDump += '  ' + asciiDump + '\n';
+                            asciiDump = '';
+                        }
+                    }
+                    if (asciiDump) hexDump += '  ' + asciiDump;
+
+                    // Check for STEG magic
+                    const hasStegMagic = raw[0]===0x53 && raw[1]===0x54 && raw[2]===0x45 && raw[3]===0x47;
+                    // Check for other magics
+                    const magics = [];
+                    if (raw[0]===0x89 && raw[1]===0x50) magics.push('PNG');
+                    if (raw[0]===0xFF && raw[1]===0xD8) magics.push('JPEG');
+                    if (raw[0]===0x50 && raw[1]===0x4B) magics.push('ZIP');
+                    if (raw[0]===0x78 && (raw[1]===0x9C || raw[1]===0xDA)) magics.push('ZLIB');
+
+                    const chName = channels.map(c => ['R','G','B','A'][c]).join('');
+                    return {
+                        success: true,
+                        channels: chName,
+                        bits,
+                        hexDump: hexDump.trim(),
+                        hasStegMagic,
+                        detectedMagics: magics,
+                        entropy: (() => {
+                            const freq = new Array(256).fill(0);
+                            for (const b of raw) freq[b]++;
+                            let e = 0;
+                            for (const f of freq) { if (f > 0) { const p = f/raw.length; e -= p * Math.log2(p); } }
+                            return Math.round(e * 100) / 100;
+                        })(),
+                        message: `Raw ${chName} ${bits}-bit (${raw.length} bytes). ` +
+                            (hasStegMagic ? 'STEG HEADER FOUND!' : `Entropy: ${(()=>{const f=new Array(256).fill(0);for(const b of raw)f[b]++;let e=0;for(const v of f)if(v>0){const p=v/raw.length;e-=p*Math.log2(p);}return e.toFixed(2)})()}/8.0`) +
+                            (magics.length ? ` File signatures: ${magics.join(', ')}` : '') +
+                            '\nExamine the hex dump to determine if this is meaningful data.'
+                    };
+                }
+            },
+
+            detect_text_steg: {
+                name: 'detect_text_steg',
+                description: 'Detect ALL text-based steganography in file data: zero-width Unicode, homoglyphs, whitespace encoding, invisible ink (tag chars), variation selectors, combining marks, confusable spaces, emoji patterns, capitalization encoding, directional overrides, Hangul fillers, Braille patterns, and math alphanumerics. Works on any text-based file.',
+                parameters: {},
+                execute: async (params, canvas, fileBytes) => {
+                    const bytes = fileBytes || state.aiAgentFileBytes;
+                    if (!bytes || bytes.length === 0) return { success: false, error: 'No file data' };
+
+                    let text;
+                    try {
+                        text = new TextDecoder('utf-8', { fatal: false }).decode(bytes);
+                    } catch (e) {
+                        return { success: false, error: 'File is not text' };
+                    }
+
+                    const findings = [];
+
+                    // Zero-width chars (ZWSP, ZWNJ, ZWJ)
+                    const zwsp = (text.match(/\u200B/g) || []).length;
+                    const zwnj = (text.match(/\u200C/g) || []).length;
+                    const zwj = (text.match(/\u200D/g) || []).length;
+                    if (zwsp + zwnj + zwj > 5) {
+                        // Decode
+                        const start = text.indexOf('\u200D');
+                        const end = text.indexOf('\u200D', start + 1);
+                        if (start >= 0 && end > start) {
+                            let bits = '';
+                            for (const ch of text.slice(start + 1, end)) {
+                                if (ch === '\u200B') bits += '0';
+                                else if (ch === '\u200C') bits += '1';
+                            }
+                            let msg = '';
+                            for (let i = 0; i < bits.length - 7; i += 8) {
+                                msg += String.fromCharCode(parseInt(bits.slice(i, i + 8), 2));
+                            }
+                            findings.push({ method: 'Zero-width Unicode', chars: zwsp + zwnj + zwj, decoded: msg.slice(0, 100) });
+                        } else {
+                            findings.push({ method: 'Zero-width Unicode', chars: zwsp + zwnj + zwj });
+                        }
+                    }
+
+                    // Invisible ink (U+E0000 tag chars)
+                    const tagChars = [...text].filter(c => c.codePointAt(0) >= 0xE0000 && c.codePointAt(0) <= 0xE007F);
+                    if (tagChars.length > 3) {
+                        let decoded = '';
+                        let inTag = false;
+                        for (const ch of text) {
+                            const cp = ch.codePointAt(0);
+                            if (cp === 0xE0000) { inTag = !inTag; continue; }
+                            if (inTag && cp > 0xE0000 && cp <= 0xE007F) decoded += String.fromCharCode(cp - 0xE0000);
+                        }
+                        findings.push({ method: 'Invisible ink (tag chars)', chars: tagChars.length, decoded: decoded.slice(0, 100) });
+                    }
+
+                    // Homoglyphs (Cyrillic lookalikes) — detect + decode
+                    const cyrillicLookalikes = { '\u0430':'a','\u0441':'c','\u0435':'e','\u043e':'o','\u0440':'p','\u0455':'s','\u0445':'x','\u0443':'y' };
+                    const homoglyphSubstitutable = new Set([...'aceopsx', ...'ABCEHKMOPTX']);
+                    let homoglyphBits = '';
+                    for (const ch of text) {
+                        if (cyrillicLookalikes[ch]) homoglyphBits += '1';
+                        else if (homoglyphSubstitutable.has(ch)) homoglyphBits += '0';
+                    }
+                    if (homoglyphBits.length > 16) {
+                        const hLen = parseInt(homoglyphBits.slice(0, 16), 2);
+                        if (hLen > 0 && hLen < homoglyphBits.length / 8) {
+                            let hMsg = '';
+                            for (let i = 16; i < 16 + hLen * 8 && i + 8 <= homoglyphBits.length; i += 8)
+                                hMsg += String.fromCharCode(parseInt(homoglyphBits.slice(i, i + 8), 2));
+                            findings.push({ method: 'Homoglyph (Cyrillic)', substitutions: homoglyphBits.split('1').length - 1, decoded: hMsg.slice(0, 100) });
+                        } else {
+                            findings.push({ method: 'Homoglyph (Cyrillic)', substitutions: homoglyphBits.split('1').length - 1 });
+                        }
+                    }
+
+                    // Whitespace encoding (trailing spaces/tabs)
+                    const lines = text.split('\n');
+                    let trailingWS = 0;
+                    for (const line of lines) {
+                        const trail = line.length - line.trimEnd().length;
+                        if (trail > 0) trailingWS += trail;
+                    }
+                    if (trailingWS > 10) {
+                        let bits = '';
+                        for (const line of lines) {
+                            const trailing = line.slice(line.trimEnd().length);
+                            for (const ch of trailing) {
+                                bits += ch === ' ' ? '0' : '1';
+                            }
+                        }
+                        if (bits.length >= 16) {
+                            const len = parseInt(bits.slice(0, 16), 2);
+                            if (len > 0 && len < bits.length / 8) {
+                                let msg = '';
+                                for (let i = 16; i < 16 + len * 8 && i + 8 <= bits.length; i += 8) {
+                                    msg += String.fromCharCode(parseInt(bits.slice(i, i + 8), 2));
+                                }
+                                findings.push({ method: 'Whitespace (space/tab)', trailingChars: trailingWS, decoded: msg.slice(0, 100) });
+                            } else {
+                                findings.push({ method: 'Whitespace (space/tab)', trailingChars: trailingWS });
+                            }
+                        }
+                    }
+
+                    // Variation selectors — decode (presence after base char = 1, absence = 0)
+                    { let vsBits = '';
+                    for (let i = 0; i < text.length; i++) {
+                        const cp = text.charCodeAt(i);
+                        if (cp >= 0xFE00 && cp <= 0xFE0F) vsBits += '1';
+                        else if (text.charCodeAt(i+1) >= 0xFE00 && text.charCodeAt(i+1) <= 0xFE0F) {} // skip, next is VS
+                        else if (cp >= 0x21 && cp < 0xFE00) vsBits += '0'; // regular char without VS
+                    }
+                    if (vsBits.length > 16) {
+                        const vsLen = parseInt(vsBits.slice(0, 16), 2);
+                        if (vsLen > 0 && vsLen < vsBits.length / 8) {
+                            let vsMsg = '';
+                            for (let i = 16; i < 16 + vsLen * 8 && i + 8 <= vsBits.length; i += 8)
+                                vsMsg += String.fromCharCode(parseInt(vsBits.slice(i, i + 8), 2));
+                            findings.push({ method: 'Variation selectors', count: vsBits.split('1').length-1, decoded: vsMsg.slice(0, 100) });
+                        } else if (vsBits.split('1').length - 1 > 3) {
+                            findings.push({ method: 'Variation selectors', count: vsBits.split('1').length-1 });
+                        }
+                    }}
+
+                    // Combining marks (CGJ U+034F) — decode (CGJ present = 1, absent = 0)
+                    { let cgjBits = '';
+                    for (const ch of text) {
+                        if (ch === '\u034F') cgjBits += '1';
+                        else if (ch.match(/[a-zA-Z]/)) cgjBits += '0';
+                    }
+                    if (cgjBits.length > 16) {
+                        const cgjLen = parseInt(cgjBits.slice(0, 16), 2);
+                        if (cgjLen > 0 && cgjLen < cgjBits.length / 8) {
+                            let cgjMsg = '';
+                            for (let i = 16; i < 16 + cgjLen * 8 && i + 8 <= cgjBits.length; i += 8)
+                                cgjMsg += String.fromCharCode(parseInt(cgjBits.slice(i, i + 8), 2));
+                            findings.push({ method: 'Combining Grapheme Joiner', count: cgjBits.split('1').length-1, decoded: cgjMsg.slice(0, 100) });
+                        } else if (cgjBits.split('1').length - 1 > 3) {
+                            findings.push({ method: 'Combining Grapheme Joiner', count: cgjBits.split('1').length-1 });
+                        }
+                    }}
+
+                    // Confusable whitespace — decode (en=01, em=10, thin=11, regular=00)
+                    { const confMap = {'\u2002':'01','\u2003':'10','\u2009':'11',' ':'00'};
+                    let cwBits = '';
+                    for (const ch of text) { if (confMap[ch]) cwBits += confMap[ch]; }
+                    const confCount = [...text].filter(c => ['\u2002','\u2003','\u2009','\u200A','\u00A0'].includes(c)).length;
+                    if (confCount > 2) {
+                        if (cwBits.length > 16) {
+                            const cwLen = parseInt(cwBits.slice(0, 16), 2);
+                            if (cwLen > 0 && cwLen < cwBits.length / 8) {
+                                let cwMsg = '';
+                                for (let i = 16; i < 16 + cwLen * 8 && i + 8 <= cwBits.length; i += 8)
+                                    cwMsg += String.fromCharCode(parseInt(cwBits.slice(i, i + 8), 2));
+                                findings.push({ method: 'Confusable whitespace', count: confCount, decoded: cwMsg.slice(0, 100) });
+                            } else {
+                                findings.push({ method: 'Confusable whitespace', count: confCount });
+                            }
+                        } else {
+                            findings.push({ method: 'Confusable whitespace', count: confCount });
+                        }
+                    }}
+
+                    // Directional overrides — decode (RLO=1, LRO=0)
+                    { let dirBits = '';
+                    for (const ch of text) {
+                        if (ch === '\u202E') dirBits += '1';
+                        else if (ch === '\u202D') dirBits += '0';
+                    }
+                    if (dirBits.length > 16) {
+                        const dirLen = parseInt(dirBits.slice(0, 16), 2);
+                        if (dirLen > 0 && dirLen < dirBits.length / 8) {
+                            let dirMsg = '';
+                            for (let i = 16; i < 16 + dirLen * 8 && i + 8 <= dirBits.length; i += 8)
+                                dirMsg += String.fromCharCode(parseInt(dirBits.slice(i, i + 8), 2));
+                            findings.push({ method: 'Directional overrides', count: dirBits.length, decoded: dirMsg.slice(0, 100) });
+                        } else if (dirBits.length > 5) {
+                            findings.push({ method: 'Directional overrides', rlo: dirBits.split('1').length-1, lro: dirBits.split('0').length-1 });
+                        }
+                    }}
+
+                    // Hangul filler — decode (U+3164=1, space=0)
+                    { let hfBits = '';
+                    for (const ch of text) {
+                        if (ch === '\u3164') hfBits += '1';
+                        else if (ch === ' ') hfBits += '0';
+                    }
+                    if (hfBits.length > 16 && hfBits.includes('1')) {
+                        const hfLen = parseInt(hfBits.slice(0, 16), 2);
+                        if (hfLen > 0 && hfLen < hfBits.length / 8) {
+                            let hfMsg = '';
+                            for (let i = 16; i < 16 + hfLen * 8 && i + 8 <= hfBits.length; i += 8)
+                                hfMsg += String.fromCharCode(parseInt(hfBits.slice(i, i + 8), 2));
+                            findings.push({ method: 'Hangul filler', count: hfBits.split('1').length-1, decoded: hfMsg.slice(0, 100) });
+                        } else {
+                            findings.push({ method: 'Hangul filler', count: hfBits.split('1').length-1 });
+                        }
+                    }}
+
+                    // Braille patterns
+                    const braille = [...text].filter(c => c.codePointAt(0) >= 0x2800 && c.codePointAt(0) <= 0x28FF);
+                    if (braille.length > 3) {
+                        const decoded = braille.map(c => String.fromCharCode(c.codePointAt(0) - 0x2800)).join('');
+                        findings.push({ method: 'Braille patterns', chars: braille.length, decoded: decoded.slice(0, 100) });
+                    }
+
+                    // Math alphanumerics — decode (bold=1, normal=0)
+                    { let maBits = '';
+                    for (const ch of text) {
+                        const cp = ch.codePointAt(0);
+                        if ((cp >= 0x1D400 && cp <= 0x1D419) || (cp >= 0x1D41A && cp <= 0x1D433)) maBits += '1';
+                        else if ((cp >= 65 && cp <= 90) || (cp >= 97 && cp <= 122)) maBits += '0';
+                    }
+                    if (maBits.length > 16 && maBits.includes('1')) {
+                        const maLen = parseInt(maBits.slice(0, 16), 2);
+                        if (maLen > 0 && maLen < maBits.length / 8) {
+                            let maMsg = '';
+                            for (let i = 16; i < 16 + maLen * 8 && i + 8 <= maBits.length; i += 8)
+                                maMsg += String.fromCharCode(parseInt(maBits.slice(i, i + 8), 2));
+                            findings.push({ method: 'Math bold alphanumerics', count: maBits.split('1').length-1, decoded: maMsg.slice(0, 100) });
+                        } else {
+                            findings.push({ method: 'Math bold alphanumerics', count: maBits.split('1').length-1 });
+                        }
+                    }}
+
+                    // Emoji skin tone — decode (4 tones = 2 bits each)
+                    { const toneMap = {0x1F3FB:0, 0x1F3FC:1, 0x1F3FE:2, 0x1F3FF:3};
+                    const tonePairs = [];
+                    for (const ch of text) {
+                        const cp = ch.codePointAt(0);
+                        if (toneMap[cp] !== undefined) tonePairs.push(toneMap[cp]);
+                    }
+                    if (tonePairs.length >= 4) {
+                        const stBytes = [];
+                        for (let i = 0; i + 3 < tonePairs.length; i += 4)
+                            stBytes.push((tonePairs[i]<<6)|(tonePairs[i+1]<<4)|(tonePairs[i+2]<<2)|tonePairs[i+3]);
+                        try {
+                            const stMsg = new TextDecoder('utf-8', {fatal:true}).decode(new Uint8Array(stBytes));
+                            const printable = [...stMsg].filter(c => c.charCodeAt(0) >= 32).length;
+                            if (printable > stMsg.length * 0.5)
+                                findings.push({ method: 'Emoji skin tone', count: tonePairs.length, decoded: stMsg.slice(0, 100) });
+                            else
+                                findings.push({ method: 'Emoji skin tone', count: tonePairs.length });
+                        } catch(e) {
+                            findings.push({ method: 'Emoji skin tone', count: tonePairs.length });
+                        }
+                    }}
+
+                    // Base64 detection
+                    const b64matches = text.match(/[A-Za-z0-9+/]{20,}={0,2}/g) || [];
+                    for (const m of b64matches.slice(0, 3)) {
+                        try {
+                            const decoded = atob(m);
+                            const printable = [...decoded].filter(c => c.charCodeAt(0) >= 32 && c.charCodeAt(0) < 127).length;
+                            if (printable > decoded.length * 0.7 && decoded.length > 10) {
+                                findings.push({ method: 'Base64', decoded: decoded.slice(0, 100) });
+                            }
+                        } catch (e) {}
+                    }
+
+                    return {
+                        success: findings.length > 0,
+                        findings,
+                        totalMethods: 13,
+                        message: findings.length > 0
+                            ? `Found ${findings.length} text steg method(s): ${findings.map(f => f.method).join(', ')}`
+                            : 'No text steganography detected'
+                    };
+                }
+            },
+
+            f5_decode: {
+                name: 'f5_decode',
+                description: 'Decode F5 JPEG steganography. Requires a password. F5 embeds data in JPEG DCT coefficients using matrix encoding.',
+                parameters: {
+                    password: { type: 'string', description: 'Password used during F5 encoding', default: '' }
+                },
+                execute: async (params, canvas, fileBytes) => {
+                    const bytes = fileBytes || state.aiAgentFileBytes;
+                    if (!bytes) return { success: false, error: 'No raw file bytes (F5 needs JPEG data)' };
+                    const password = params.password || '';
+                    try {
+                        if (typeof f5stego === 'undefined') return { success: false, error: 'F5 library not loaded' };
+                        const stego = new f5stego(password);
+                        const data = stego.extract(bytes);
+                        if (data && data.length > 0) {
+                            const text = new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(data));
+                            const analysis = detectCoherentText(new Uint8Array(data));
+                            return {
+                                success: true,
+                                size: data.length,
+                                isText: analysis.isText,
+                                confidence: analysis.confidence,
+                                preview: analysis.preview || text.slice(0, 100),
+                                message: `F5 extracted ${data.length} bytes${password ? ' (password: ' + password + ')' : ''}`
+                            };
+                        }
+                        return { success: false, message: 'No F5 data found' + (password ? '' : ' (try with a password)') };
+                    } catch (e) {
+                        return { success: false, error: e.message };
+                    }
+                }
+            },
+
+            spread_decode: {
+                name: 'spread_decode',
+                description: 'Decode spread spectrum steganography. Data is spread across pixels using a password-derived PRNG sequence. Requires the encoding password.',
+                parameters: {
+                    password: { type: 'string', description: 'Password used during spread encoding' },
+                    spreadFactor: { type: 'number', description: 'Spread factor (default 16)', default: 16 }
+                },
+                execute: async (params, canvas) => {
+                    if (!params.password) return { success: false, error: 'Spread spectrum requires a password' };
+                    try {
+                        const data = await spreadDecode(canvas, params.password, params.spreadFactor || 16);
+                        if (data && data.length > 0) {
+                            const analysis = detectCoherentText(data);
+                            return {
+                                success: analysis.isText || analysis.confidence > 40,
+                                size: data.length,
+                                confidence: analysis.confidence,
+                                preview: analysis.preview,
+                                message: analysis.isText ? `Spread spectrum decoded: ${analysis.preview}` : 'Data extracted but not text'
+                            };
+                        }
+                        return { success: false, message: 'No spread spectrum data found with this password' };
+                    } catch (e) {
+                        return { success: false, error: e.message };
+                    }
+                }
+            },
+
+            palette_decode: {
+                name: 'palette_decode',
+                description: 'Decode palette-based steganography. Works on palette/indexed images (GIF, 8-bit PNG). Tries index LSB and color LSB methods.',
+                parameters: {
+                    mode: { type: 'string', description: 'index (palette index LSB) or color (palette color LSB)', default: 'index' }
+                },
+                execute: async (params, canvas) => {
+                    const modes = params.mode === 'all' ? ['index', 'color'] : [params.mode || 'index'];
+                    const results = [];
+                    for (const mode of modes) {
+                        try {
+                            const data = await paletteDecode(canvas, mode);
+                            if (data && data.length > 0) {
+                                const analysis = detectCoherentText(data);
+                                if (analysis.isText || analysis.confidence > 40) {
+                                    results.push({
+                                        mode,
+                                        size: data.length,
+                                        confidence: analysis.confidence,
+                                        preview: analysis.preview
+                                    });
+                                }
+                            }
+                        } catch (e) {}
+                    }
+                    return {
+                        success: results.length > 0,
+                        findings: results,
+                        message: results.length > 0
+                            ? `Palette decode (${results[0].mode}): ${results[0].preview}`
+                            : 'No palette steganography found'
+                    };
+                }
+            },
+
+            png_chunk_decode: {
+                name: 'png_chunk_decode',
+                description: 'Decode data hidden in PNG metadata chunks (tEXt, zTXt, iTXt, private chunks). Extracts all text chunks and their contents.',
+                parameters: {
+                    chunkType: { type: 'string', description: 'tEXt, zTXt, iTXt, or all', default: 'all' }
+                },
+                execute: async (params, canvas, fileBytes) => {
+                    const bytes = fileBytes || state.aiAgentFileBytes;
+                    if (!bytes) return { success: false, error: 'No raw file bytes available' };
+                    try {
+                        const results = [];
+                        const types = params.chunkType === 'all' ? ['tEXt', 'zTXt', 'iTXt'] : [params.chunkType || 'tEXt'];
+                        for (const ct of types) {
+                            try {
+                                const data = await pngChunkDecode(bytes, ct);
+                                if (data) {
+                                    const text = typeof data === 'string' ? data : new TextDecoder().decode(data);
+                                    if (text.length > 0) {
+                                        results.push({ chunkType: ct, content: text.slice(0, 200) });
+                                    }
+                                }
+                            } catch (e) {}
+                        }
+                        return {
+                            success: results.length > 0,
+                            chunks: results,
+                            message: results.length > 0
+                                ? `Found ${results.length} text chunks`
+                                : 'No text chunks found'
+                        };
+                    } catch (e) {
+                        return { success: false, error: e.message };
+                    }
+                }
+            },
+
+            pvd_decode: {
+                name: 'pvd_decode',
+                description: 'Decode Pixel Value Differencing (PVD) steganography. PVD hides data in the differences between adjacent pixel pairs. Tries all 3 range tables (wu-tsai, wide, narrow) and both directions (horizontal, vertical).',
+                parameters: {
+                    direction: { type: 'string', description: 'horizontal, vertical, or both', default: 'horizontal' },
+                    rangeType: { type: 'string', description: 'wu-tsai, wide, or narrow', default: 'wu-tsai' }
+                },
+                execute: async (params, canvas) => {
+                    const directions = (params.direction === 'all') ? ['horizontal', 'vertical', 'both'] : [params.direction || 'horizontal'];
+                    const rangeTypes = (params.rangeType === 'all') ? ['wu-tsai', 'wide', 'narrow'] : [params.rangeType || 'wu-tsai'];
+                    const results = [];
+
+                    for (const dir of directions) {
+                        for (const rt of rangeTypes) {
+                            try {
+                                const data = await pvdDecode(canvas, dir, rt);
+                                if (data && data.length > 0) {
+                                    const text = new TextDecoder('utf-8', { fatal: false }).decode(data);
+                                    const analysis = detectCoherentText(data);
+                                    if (analysis.isText || analysis.confidence > 40) {
+                                        results.push({
+                                            direction: dir,
+                                            rangeType: rt,
+                                            size: data.length,
+                                            confidence: analysis.confidence,
+                                            preview: analysis.preview,
+                                            isText: analysis.isText
+                                        });
+                                    }
+                                }
+                            } catch (e) {}
+                        }
+                    }
+
+                    return {
+                        success: results.length > 0,
+                        tested: directions.length * rangeTypes.length,
+                        findings: results,
+                        message: results.length > 0
+                            ? `PVD data found (${results[0].direction}, ${results[0].rangeType}): ${results[0].preview}`
+                            : 'No PVD-encoded data found'
                     };
                 }
             }
@@ -18590,6 +20230,237 @@
             </div>`;
         }
 
+        async function generateCarrierImage() {
+            const apiKey = document.getElementById('aiagent-api-key').value.trim();
+            const prompt = document.getElementById('aiagent-image-prompt').value.trim() || 'natural landscape';
+            const statusEl = document.getElementById('aiagent-generate-status');
+            const btn = document.getElementById('aiagent-generate-btn');
+            statusEl.style.display = 'block';
+            btn.disabled = true;
+
+            let generated = false;
+
+            // Try OpenRouter image generation
+            // Uses /api/v1/chat/completions with an image-capable model
+            // Ref: https://github.com/yusufipk/imagen-openrouter
+            if (apiKey) {
+                statusEl.textContent = '\u23f3 Generating via AI...';
+                statusEl.style.color = '#8b5cf6';
+                try {
+                    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${apiKey}`,
+                            'Content-Type': 'application/json',
+                            'HTTP-Referer': window.location.origin,
+                            'X-Title': 'ST3GG Carrier Generator'
+                        },
+                        body: JSON.stringify({
+                            model: 'google/gemini-2.5-flash-image',
+                            messages: [{
+                                role: 'user',
+                                content: `Generate a high-quality detailed photograph: ${prompt}. Rich textures, varied colors, natural detail.`
+                            }]
+                        })
+                    });
+
+                    if (!response.ok) throw new Error(`API ${response.status}`);
+                    const data = await response.json();
+                    const message = data.choices?.[0]?.message;
+                    if (!message) throw new Error('No response');
+
+                    // Extract image — OpenRouter returns in various formats per model
+                    let imageDataUrl = null;
+
+                    // Format 1: message.images[] (OpenRouter SDK format)
+                    if (message.images?.length > 0) {
+                        const img = message.images[0];
+                        if (img.image_url?.url) imageDataUrl = img.image_url.url;
+                        else if (typeof img === 'string') imageDataUrl = img.startsWith('data:') ? img : `data:image/png;base64,${img}`;
+                        else if (img.url) imageDataUrl = img.url;
+                        else if (img.b64_json) imageDataUrl = `data:image/png;base64,${img.b64_json}`;
+                    }
+
+                    // Format 2: message.content[] parts (Gemini/OpenAI style)
+                    if (!imageDataUrl && Array.isArray(message.content)) {
+                        for (const part of message.content) {
+                            if (part.type === 'image_url' && part.image_url?.url) { imageDataUrl = part.image_url.url; break; }
+                            if (part.inlineData?.data) { imageDataUrl = `data:${part.inlineData.mimeType || 'image/png'};base64,${part.inlineData.data}`; break; }
+                            if (part.type === 'image' && part.image) { imageDataUrl = part.image.startsWith('data:') ? part.image : `data:image/png;base64,${part.image}`; break; }
+                        }
+                    }
+
+                    // Format 3: content is the image data string
+                    if (!imageDataUrl && typeof message.content === 'string' && message.content.startsWith('data:image')) {
+                        imageDataUrl = message.content;
+                    }
+
+                    if (imageDataUrl) {
+                        const img = new Image();
+                        await new Promise((resolve, reject) => {
+                            img.onload = resolve;
+                            img.onerror = reject;
+                            img.src = imageDataUrl;
+                        });
+                        state.aiAgentCanvas = imageToCanvas(img);
+                        state.aiAgentConcealCanvas = state.aiAgentCanvas;
+                        document.getElementById('aiagent-conceal-preview').src = img.src;
+                        document.getElementById('aiagent-conceal-preview').classList.remove('hidden');
+                        document.getElementById('aiagent-conceal-info').textContent = `${img.naturalWidth} x ${img.naturalHeight} (AI Generated)`;
+                        statusEl.textContent = '\u2713 AI carrier generated!';
+                        statusEl.style.color = 'var(--primary)';
+                        notify('AI carrier image generated!', 'success');
+                        generated = true;
+                    }
+                } catch (e) {
+                    console.log('Image gen API error:', e.message);
+                }
+            }
+
+            // Fallback: procedural generation (always works)
+            if (!generated) {
+                statusEl.textContent = '\u26a1 Generating locally...';
+                statusEl.style.color = '#8b5cf6';
+
+                const canvas = document.createElement('canvas');
+                canvas.width = 800; canvas.height = 800;
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+                let seed = 0;
+                for (let i = 0; i < prompt.length; i++) seed = (seed * 31 + prompt.charCodeAt(i)) | 0;
+                seed = Math.abs(seed) || 42;
+                const rng = (n) => { n = Math.sin(n * 127.1 + seed * 311.7) * 43758.5453; return n - Math.floor(n); };
+
+                // Layer 1: Gradient
+                for (let y = 0; y < 800; y++) {
+                    const t = y / 800;
+                    ctx.fillStyle = `rgb(${Math.floor(40+80*t+60*Math.sin(y*0.01+seed))},${Math.floor(30+70*(1-t)+50*Math.cos(y*0.013+seed*2))},${Math.floor(50+90*t+40*Math.sin(y*0.017+seed*3))})`;
+                    ctx.fillRect(0, y, 800, 1);
+                }
+                // Layer 2: Noise blobs
+                for (let i = 0; i < 40; i++) {
+                    const grad = ctx.createRadialGradient(rng(i*7.3)*800, rng(i*13.7)*800, 0, rng(i*7.3)*800, rng(i*13.7)*800, 30+rng(i*19.1)*150);
+                    grad.addColorStop(0, `hsla(${(seed+i*23)%360},50%,50%,${0.03+rng(i*23.9)*0.08})`);
+                    grad.addColorStop(1, 'transparent');
+                    ctx.fillStyle = grad; ctx.fillRect(0, 0, 800, 800);
+                }
+                // Layer 3: Fine noise
+                const imgData = ctx.getImageData(0, 0, 800, 800);
+                for (let i = 0; i < imgData.data.length; i += 4) {
+                    const p = i/4;
+                    imgData.data[i]   = Math.max(0, Math.min(255, imgData.data[i]   + (rng(p*1.7)*16-8)|0));
+                    imgData.data[i+1] = Math.max(0, Math.min(255, imgData.data[i+1] + (rng(p*2.3+999)*12-6)|0));
+                    imgData.data[i+2] = Math.max(0, Math.min(255, imgData.data[i+2] + (rng(p*3.1+1999)*14-7)|0));
+                }
+                ctx.putImageData(imgData, 0, 0);
+                // Layer 4: Organic curves
+                ctx.globalAlpha = 0.06;
+                for (let i = 0; i < 15; i++) {
+                    ctx.strokeStyle = `hsl(${(seed*7+i*17)%360},40%,50%)`;
+                    ctx.lineWidth = 1+rng(i*31.3)*3;
+                    ctx.beginPath();
+                    let cx = rng(i*41.7)*800, cy = rng(i*43.9)*800;
+                    ctx.moveTo(cx, cy);
+                    for (let j = 0; j < 20; j++) { cx+=(rng(i*100+j*7)-0.5)*80; cy+=(rng(i*100+j*11)-0.5)*80; ctx.lineTo(cx,cy); }
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
+
+                state.aiAgentCanvas = canvas;
+                state.aiAgentConcealCanvas = canvas;
+                document.getElementById('aiagent-conceal-preview').src = canvas.toDataURL('image/png');
+                document.getElementById('aiagent-conceal-preview').classList.remove('hidden');
+                document.getElementById('aiagent-conceal-info').textContent = '800 x 800 (Generated)';
+                statusEl.textContent = '\u2713 Carrier generated!';
+                statusEl.style.color = 'var(--primary)';
+                notify('Carrier image generated', 'success');
+            }
+
+            btn.disabled = false;
+        }
+
+
+        function toggleCustomModel() {
+            const select = document.getElementById('aiagent-model');
+            const input = document.getElementById('aiagent-custom-model');
+            const hint = document.getElementById('aiagent-custom-hint');
+            if (select.value === 'custom') {
+                input.style.display = 'block';
+                hint.style.display = 'block';
+                input.focus();
+            } else {
+                input.style.display = 'none';
+                hint.style.display = 'none';
+            }
+        }
+
+        function setAgentMode(mode) {
+            state.aiAgentMode = mode;
+            const analyzeBtn = document.getElementById('aiagent-mode-analyze');
+            const encodeBtn = document.getElementById('aiagent-mode-encode');
+            const encodeSection = document.getElementById('aiagent-encode-section');
+            const encodeOptions = document.getElementById('aiagent-encode-options');
+            const revealOptions = document.getElementById('aiagent-reveal-options');
+            const revealUpload = document.getElementById('aiagent-reveal-upload');
+            const concealUpload = document.getElementById('aiagent-conceal-upload');
+            const contextEl = document.getElementById('aiagent-context');
+            const contextLabel = document.getElementById('aiagent-context-label');
+            const startBtn = document.getElementById('aiagent-start-btn');
+
+            if (mode === 'encode') {
+                analyzeBtn.style.opacity = '0.6';
+                analyzeBtn.style.background = 'transparent';
+                analyzeBtn.style.color = 'var(--text)';
+                analyzeBtn.style.fontWeight = 'normal';
+                analyzeBtn.style.borderColor = 'var(--primary)44';
+                encodeBtn.style.opacity = '1';
+                encodeBtn.style.background = '#8b5cf6';
+                encodeBtn.style.color = '#fff';
+                encodeBtn.style.fontWeight = 'bold';
+                encodeBtn.style.borderColor = '#8b5cf6';
+                encodeBtn.style.boxShadow = '0 0 15px rgba(139, 92, 246, 0.3)';
+                encodeSection.style.display = 'block';
+                encodeOptions.style.display = 'block';
+                revealOptions.style.display = 'none';
+                revealUpload.style.display = 'none';
+                concealUpload.style.display = 'block';
+                contextLabel.textContent = 'Encoding Instructions (Optional)';
+                contextEl.placeholder = "e.g., 'Use DCT for compression resistance' or 'Make it hard to detect'";
+                startBtn.textContent = '🔮 Conceal';
+                startBtn.style.background = '#8b5cf6';
+                // Restore conceal canvas
+                if (state.aiAgentConcealCanvas) {
+                    state.aiAgentCanvas = state.aiAgentConcealCanvas;
+                }
+            } else {
+                analyzeBtn.style.opacity = '1';
+                analyzeBtn.style.background = 'var(--primary)';
+                analyzeBtn.style.color = '#000';
+                analyzeBtn.style.fontWeight = 'bold';
+                analyzeBtn.style.borderColor = 'var(--primary)';
+                analyzeBtn.style.boxShadow = '0 0 15px rgba(0, 255, 65, 0.3)';
+                encodeBtn.style.opacity = '0.6';
+                encodeBtn.style.background = 'transparent';
+                encodeBtn.style.color = 'var(--text)';
+                encodeBtn.style.fontWeight = 'normal';
+                encodeBtn.style.borderColor = '#8b5cf644';
+                encodeBtn.style.boxShadow = 'none';
+                encodeSection.style.display = 'none';
+                encodeOptions.style.display = 'none';
+                revealOptions.style.display = 'block';
+                revealUpload.style.display = 'block';
+                concealUpload.style.display = 'none';
+                contextLabel.textContent = 'Context / Hints (Optional)';
+                contextEl.placeholder = "e.g., 'Password might be related to the filename' or 'Try common CTF techniques'";
+                startBtn.textContent = '🔍 Reveal';
+                startBtn.style.background = '';
+                // Restore reveal canvas
+                if (state.aiAgentRevealCanvas) {
+                    state.aiAgentCanvas = state.aiAgentRevealCanvas;
+                }
+            }
+        }
+
         function clearAIAgentLog() {
             document.getElementById('aiagent-log').innerHTML = '';
             document.getElementById('aiagent-findings').innerHTML = '<span class="text-muted">No findings yet...</span>';
@@ -18697,7 +20568,11 @@
 
         async function startAIAgent() {
             const apiKey = document.getElementById('aiagent-api-key').value.trim();
-            const model = document.getElementById('aiagent-model').value;
+            let model = document.getElementById('aiagent-model').value;
+            if (model === 'custom') {
+                model = document.getElementById('aiagent-custom-model').value.trim();
+                if (!model) { notify('Enter a custom model ID', 'error'); return; }
+            }
             const context = document.getElementById('aiagent-context').value.trim();
             const useVision = document.getElementById('aiagent-vision').checked;
             const maxIterations = parseInt(document.getElementById('aiagent-iterations').value);
@@ -18716,6 +20591,15 @@
                 return;
             }
 
+            // Validate secret message in Conceal mode
+            if (state.aiAgentMode === 'encode') {
+                const secretMsg = document.getElementById('aiagent-secret-message')?.value?.trim();
+                if (!secretMsg) {
+                    notify('Please enter a secret message to conceal', 'error');
+                    return;
+                }
+            }
+
             // Reset state
             state.aiAgentRunning = true;
             state.aiAgentAborted = false;
@@ -18726,19 +20610,59 @@
 
             // Update UI
             document.getElementById('aiagent-start-btn').disabled = true;
-            document.getElementById('aiagent-stop-btn').disabled = false;
-            setAIAgentStatus('Initializing...', 'var(--secondary)');
+            const stopBtn = document.getElementById('aiagent-stop-btn');
+            stopBtn.style.display = '';
+            stopBtn.disabled = false;
+            stopBtn.style.background = '#c0392b';
+            stopBtn.style.color = '#fff';
+            stopBtn.style.borderColor = '#c0392b';
 
-            aiAgentLog('═══════════════════════════════════════════', 'info');
-            aiAgentLog('🤖 AI STEG ANALYSIS AGENT v2.0', 'success');
-            aiAgentLog('═══════════════════════════════════════════', 'info');
+            const agentMode = state.aiAgentMode || 'analyze';
+            const isEncode = agentMode === 'encode';
+
+            // Pulse the start button while agent runs
+            const startBtn = document.getElementById('aiagent-start-btn');
+            startBtn.classList.add(isEncode ? 'agent-running-conceal' : 'agent-running-reveal');
+
+            // Visual fanfare — flash the status bar
+            const statusEl = document.getElementById('aiagent-status');
+            const accentColor = isEncode ? '#8b5cf6' : 'var(--primary)';
+            statusEl.style.transition = 'all 0.3s ease';
+            statusEl.style.background = accentColor;
+            statusEl.style.color = '#000';
+            statusEl.style.fontWeight = 'bold';
+            setAIAgentStatus(isEncode ? '🔮 Concealing...' : '🔍 Revealing...', accentColor);
+            setTimeout(() => {
+                statusEl.style.background = 'var(--bg-hover)';
+                statusEl.style.color = '';
+                statusEl.style.fontWeight = '';
+            }, 1500);
+
+            // Clear log with fresh header
+            document.getElementById('aiagent-log').innerHTML = '';
+            aiAgentLog('', 'info');
+            if (isEncode) {
+                aiAgentLog('⊰•-•✧•-•-⦑ ST3GG CONCEAL AGENT ⦒-•-•✧•-•⊱', 'success');
+                aiAgentLog('      weaving secrets into the ordinary', 'info');
+            } else {
+                aiAgentLog('⊰•-•✧•-•-⦑ ST3GG REVEAL AGENT ⦒-•-•✧•-•⊱', 'success');
+                aiAgentLog('     pulling secrets from the shadows', 'info');
+            }
+            aiAgentLog('', 'info');
             aiAgentLog(`Model: ${model}`, 'info');
-            aiAgentLog(`Max iterations: ${maxIterations}`, 'info');
-            aiAgentLog(`Vision: ${useVision ? 'enabled' : 'disabled'}`, 'info');
-            const exhaustivePrelim = document.getElementById('aiagent-exhaustive')?.checked || false;
-            aiAgentLog(`Exhaustive Mode: ${exhaustivePrelim ? '🔬 ENABLED (checklist-based)' : 'disabled'}`, exhaustivePrelim ? 'success' : 'info');
+            if (!isEncode) {
+                aiAgentLog(`Max iterations: ${maxIterations}`, 'info');
+                aiAgentLog(`Vision: ${useVision ? 'enabled' : 'disabled'}`, 'info');
+                const exhaustivePrelim = document.getElementById('aiagent-exhaustive')?.checked || false;
+                aiAgentLog(`Exhaustive Mode: ${exhaustivePrelim ? '🔬 ENABLED' : 'disabled'}`, exhaustivePrelim ? 'success' : 'info');
+            } else {
+                const method = document.getElementById('aiagent-encode-method')?.value || 'auto';
+                aiAgentLog(`Encoding method: ${method}`, 'info');
+                aiAgentLog(`Secret: ${(document.getElementById('aiagent-secret-message')?.value || '').length} chars`, 'info');
+            }
             aiAgentLog(`Tools available: ${Object.keys(AI_AGENT_TOOLS).length}`, 'info');
-            if (context) aiAgentLog(`Context: ${context}`, 'info');
+            if (context) aiAgentLog(`${isEncode ? 'Instructions' : 'Context'}: ${context}`, 'info');
+            const exhaustivePrelim = !isEncode && (document.getElementById('aiagent-exhaustive')?.checked || false);
             if (exhaustivePrelim) {
                 const checklistInfo = getChecklistForFileType('PNG');
                 aiAgentLog(`Checklist: ${checklistInfo.techniques.length} techniques for ${checklistInfo.name}`, 'info');
@@ -18791,7 +20715,11 @@ ${formatChecklistForPrompt(checklist, true)}
             }
 
             // Build the system prompt
-            const systemPrompt = `You are ST3GG ALLSIGHT — an expert steganography analysis agent. Your job is to methodically test every known data-hiding technique against the uploaded file and report ONLY verified, high-confidence findings.
+            const systemPrompt = `You are ST3GG ALLSIGHT — an expert steganography analysis AND encoding agent. You can both DETECT hidden data and CREATE steganographic payloads. Your job is to help users with:
+- Analyzing files for hidden steganographic content (BLUE TEAM / defense)
+- Generating steganographic payloads for security testing (RED TEAM / offense)
+- CTF challenge solving and creation
+- Privacy research and covert communication testing
 
 ⊰ AVAILABLE TOOLS ⊱
 ${toolDescriptions}
@@ -18828,18 +20756,67 @@ To finish:
 ${checklistSection}
 
 ⊰ ANALYSIS STRATEGY ⊱
-Phase 1 — Broad reconnaissance (run in parallel):
-  • smart_scan — tests 16+ channel/bit STEG header configurations
-  • fuzz_all_channels — brute-forces 160+ extraction methods
+
+FOR IMAGE FILES — Phase 1 (run ALL in parallel on first iteration):
+  • smart_scan — tests ALL 120 channel/bit STEG header configs
+  • fuzz_all_channels — brute-forces 180+ methods (LSB, DCT, Chroma, PVD, Palette)
   • get_image_info — dimensions, mode, color statistics
   • extract_metadata — EXIF, PNG text chunks, JPEG comments, XMP, ICC profiles
-  • detect_trailing_data — data appended after file EOF marker
+  • detect_trailing_data — data after file EOF marker
   • parse_file_structure — PNG chunks, JPEG markers, GIF blocks
+  • detect_text_steg — scans for 13 text steg methods in metadata/embedded text
+
+IMPORTANT: smart_scan + fuzz_all_channels together test EVERY encoding method.
+If EITHER returns a STEG_HEADER hit, IMMEDIATELY use extract_artifact.
+
+FOR TEXT FILES (txt, html, xml, json, yaml, csv, py, js, css, sh, sql, md, etc):
+  • detect_text_steg — tests ALL 13 text steg methods at once:
+    zero-width, invisible ink, homoglyphs, whitespace, variation selectors,
+    combining marks, confusable spaces, directional overrides, Hangul fillers,
+    Braille, math alphanumerics, emoji skin tone, base64
+  • This one tool covers ALL text steganography methods automatically.
+
+FOR AUDIO FILES (wav, aiff, au, mp3, flac):
+  • analyze_audio — check for LSB anomalies in audio samples
+
+FOR ARCHIVE/DOCUMENT FILES (zip, tar, gz, pdf, pcap, sqlite):
+  • parse_file_structure — inspect internal structure
+  • extract_metadata — check for hidden metadata
+  • detect_trailing_data — data appended after expected end
+  • detect_text_steg — check text content for Unicode steg
+
+FOR ENCODING / RED TEAM / PAYLOAD GENERATION:
+  When the user asks you to HIDE a message, ENCODE data, CREATE a payload, or
+  generate steganographic content, use these encoding tools:
+  • encode_lsb — Hide message in pixel LSBs (most versatile, all channel combos)
+  • encode_dct — Hide message in DCT domain (survives JPEG/social media recompression)
+  • encode_pvd — Hide message via pixel differencing (resistant to histogram analysis)
+  • encode_chroma — Hide message in color channels (less visible than luminance changes)
+  • encode_text_steg — Hide message in text (zero-width, homoglyph, whitespace)
+
+  ENCODING RECOMMENDATIONS based on use case:
+  • Exfiltration test via PNG: encode_lsb with B channel 1-bit (minimal footprint)
+  • Social media survival: f5_decode is the ONLY proven JPEG survivor. Our DCT is
+    designed for resistance but not verified on every platform. Tell user to use F5
+    tab for proven social media survival, or encode_dct as best-effort.
+  • CTF challenge creation: encode_lsb with unusual channel (GBA 3-bit) for difficulty
+  • Text-based hiding: encode_text_steg with zerowidth (completely invisible)
+  • Anti-forensics: encode_pvd (harder to detect than LSB statistically)
+
+  CRITICAL: LSB is DESTROYED by ANY JPEG compression — even quality 99%.
+  If user needs compression survival, recommend F5 or DCT, never LSB.
 
 Phase 2 — Targeted analysis (based on Phase 1 results):
   • analyze_histogram — detect LSB statistical anomalies
+  • rs_analysis — RS (Regular-Singular) analysis, gold standard for LSB detection
+  • sample_pairs_analysis — Sample Pairs analysis, complementary to RS
+  • pvd_decode — Pixel Value Differencing (tries all range tables + directions)
+  • f5_decode — F5 JPEG steganography (requires password)
+  • spread_decode — Spread spectrum extraction (requires password)
+  • palette_decode — Palette/index LSB for GIF and indexed PNG
+  • png_chunk_decode — Extract data from PNG tEXt/zTXt/iTXt chunks
   • scan_embedded_files — binwalk-style signature scanning
-  • godmode_detect — GODMODE channel cipher patterns
+  • godmode_detect — SPECTER channel cipher patterns
   • matryoshka_scan — nested images-within-images
   • DCT/chroma extraction — JPEG-resistant frequency domain methods
 
@@ -18847,6 +20824,17 @@ Phase 3 — Deep extraction (only if evidence found):
   • extract_artifact — extract and decode confirmed payloads
   • try_common_passwords — XOR/AES decrypt with common keys
   • Targeted LSB with specific channel/bit configs from Phase 1 hits
+
+Phase 4 — Password-based methods (if user provides password in context):
+  • f5_decode — F5 JPEG steganography (requires password)
+  • spread_decode — Spread spectrum extraction (requires password)
+  • godmode_detect — SPECTER with user-provided password
+  • decode_with_password — XOR or AES decrypt with user password
+
+IMPORTANT: If the user provides a password or hint in the context field,
+you MUST try it with f5_decode, spread_decode, godmode_detect, AND
+decode_with_password. Password-protected steganography cannot be cracked
+without the key — the user's hint is critical.
 
 ⊰ CRITICAL RULES — READ CAREFULLY ⊱
 
@@ -18857,6 +20845,13 @@ VALIDATION (prevent false positives):
   • Random-looking hex output is NOT a finding — it needs to be decodable text, a valid file, or structured data
   • Low-confidence extractions (garbled text, control characters) are NOT findings
   • Base64 that decodes to garbage is NOT a finding
+
+EXTRACTION PRIORITY:
+  • When smart_scan or fuzz_all_channels returns STEG_HEADER or STEG_DETECTED,
+    IMMEDIATELY call extract_artifact with method='auto' to extract the payload.
+    This is the #1 priority — a STEG header means confirmed hidden data.
+  • For non-header findings (TEXT, FILE_MAGIC), use extract_artifact with the
+    specific method (lsb/dct/pvd/chroma/f5/spread/palette) and params that matched.
 
 THOROUGHNESS:
   • DO NOT conclude early — you MUST complete Phases 1-2 before concluding
@@ -18869,7 +20864,29 @@ COMMUNICATION:
   • In your "thinking" field, explain your reasoning clearly
   • After Phase 1, summarize what looks promising before diving deeper
   • If nothing is found, say so confidently — "no hidden data detected" is a valid and valuable result
-  • Don't speculate about what MIGHT be hidden — only report what IS found`;
+  • Don't speculate about what MIGHT be hidden — only report what IS found
+
+USE YOUR INTELLIGENCE AS AN LLM:
+  You are not just a tool-calling robot. You are an expert analyst. Use your reasoning:
+
+  • When smart_scan returns results, ANALYZE them: Which channels show LSB anomalies?
+    Which bit depths had unusual chi-square values? Use this to prioritize further tests.
+  • When analyze_histogram shows uneven LSB distributions in specific channels,
+    reason about which channel/bit combination is most likely carrying data.
+  • Look at the image dimensions and calculate capacity — if a 100x100 image
+    claims to hide 50KB, something is wrong (max RGB 1-bit capacity is ~3.6KB).
+  • If you see compressed data (zlib header 78 9C), note that the payload is
+    likely compressed before embedding.
+  • When fuzz_all_channels returns many low-confidence hits, FILTER them —
+    don't waste iterations on noise. Focus on STEG_HEADER (100% confidence)
+    and FILE_MAGIC (95%) hits first.
+  • If the user mentions a password or context clue, try it IMMEDIATELY with
+    all password-based tools before doing anything else.
+  • Consider the file format: JPEGs survive compression, so LSB is unlikely —
+    try DCT/F5 first. PNGs are lossless, so LSB is viable. GIFs use palettes.
+  • When you get raw extracted bytes, look at them intelligently: Do they start
+    with readable text? With a file signature? With compressed data? Or is it
+    truly random noise? Your language understanding IS the analysis.`;
 
             const messages = [{ role: 'system', content: systemPrompt }];
 
@@ -18883,7 +20900,15 @@ COMMUNICATION:
             }
             userContent.push({
                 type: 'text',
-                text: `Analyze this image for hidden steganographic data.${context ? '\n\nUser context: ' + context : ''}\n\nStart with parallel initial scans.`
+                text: state.aiAgentMode === 'encode'
+                    ? (() => {
+                        const secretMsg = document.getElementById('aiagent-secret-message')?.value || '';
+                        const method = document.getElementById('aiagent-encode-method')?.value || 'auto';
+                        const methodNames = { auto: 'your best judgment', lsb: 'encode_lsb', dct: 'encode_dct', pvd: 'encode_pvd', chroma: 'encode_chroma', text: 'encode_text_steg' };
+                        const toolName = methodNames[method] || 'encode_lsb';
+                        return `CONCEAL MODE: Hide the following secret message in the uploaded carrier image.\n\nSecret message: "${secretMsg}"\nRequested method: ${method === 'auto' ? 'Auto — choose the best method for this image' : toolName}\n${context ? 'Additional instructions: ' + context + '\n' : ''}\n${method !== 'auto' ? `Use the ${toolName} tool to encode the message. ` : 'Choose the optimal encoding method. '}Create the stego image as a downloadable PNG artifact.`;
+                    })()
+                    : `Analyze this image for hidden steganographic data.${context ? '\n\nUser context: ' + context : ''}\n\nStart with parallel initial scans.`
             });
             messages.push({ role: 'user', content: userContent });
 
@@ -18982,8 +21007,14 @@ COMMUNICATION:
 
             // Done
             state.aiAgentRunning = false;
-            document.getElementById('aiagent-start-btn').disabled = false;
-            document.getElementById('aiagent-stop-btn').disabled = true;
+            const doneBtn = document.getElementById('aiagent-start-btn');
+            doneBtn.disabled = false;
+            doneBtn.classList.remove('agent-running-reveal', 'agent-running-conceal');
+            const doneStopBtn = document.getElementById('aiagent-stop-btn');
+            doneStopBtn.style.display = 'none';
+            doneStopBtn.style.background = '';
+            doneStopBtn.style.color = '';
+            doneStopBtn.style.borderColor = '';
 
             if (state.aiAgentAborted) {
                 setAIAgentStatus('Stopped', 'var(--error)');
@@ -19003,6 +21034,13 @@ COMMUNICATION:
         function stopAIAgent() {
             state.aiAgentAborted = true;
             state.aiAgentRunning = false;
+            const startBtn = document.getElementById('aiagent-start-btn');
+            startBtn.classList.remove('agent-running-reveal', 'agent-running-conceal');
+            const stopBtn = document.getElementById('aiagent-stop-btn');
+            stopBtn.style.display = 'none';
+            stopBtn.style.background = '';
+            stopBtn.style.color = '';
+            stopBtn.style.borderColor = '';
             setAIAgentStatus('Stopping...', 'var(--warning)');
         }
 
@@ -20997,8 +23035,20 @@ Binary data (${formatSize(data.length)})
                     }
 
                     const img = new Image();
-                    img.onload = () => {
-                        state.decodeCanvas = imageToCanvas(img);
+                    img.onload = async () => {
+                        // For PNG files with raw bytes available, use direct PNG parsing
+                        // to bypass canvas premultiplied alpha (which corrupts alpha-channel steg).
+                        // putImageData does NOT premultiply, so this preserves exact pixel values.
+                        if (state.decodePngData) {
+                            const rawCanvas = await pngBytesToCanvas(state.decodePngData);
+                            if (rawCanvas) {
+                                state.decodeCanvas = rawCanvas;
+                            } else {
+                                state.decodeCanvas = imageToCanvas(img); // fallback
+                            }
+                        } else {
+                            state.decodeCanvas = imageToCanvas(img);
+                        }
                         document.getElementById('decode-image-preview').src = img.src;
                         document.getElementById('decode-image-preview').classList.remove('hidden');
                         let formatInfo = '';
@@ -21038,7 +23088,8 @@ Binary data (${formatSize(data.length)})
                     loadAudioForAnalyze(file);
                 } else {
                     switchToImageMode('analyze');
-                    state.analyzeFile = file; // Store file for structure analysis
+                    state.analyzeFile = file;
+                    state.currentFile = file; // For universal metadata analyzer
                     const img = new Image();
                     img.onload = () => {
                         state.analyzeCanvas = imageToCanvas(img);
@@ -21091,7 +23142,7 @@ Binary data (${formatSize(data.length)})
                 reader.readAsArrayBuffer(file);
             });
 
-            // GODMODE carrier drop zone
+            // SPECTER carrier drop zone
             setupDropZone('godmode-carrier-drop', 'godmode-carrier-input', file => {
                 const img = new Image();
                 img.onload = () => {
@@ -21104,7 +23155,7 @@ Binary data (${formatSize(data.length)})
                 img.src = URL.createObjectURL(file);
             });
 
-            // GODMODE payload file drop zone
+            // SPECTER payload file drop zone
             setupDropZone('godmode-file-drop', 'godmode-file-input', file => {
                 const reader = new FileReader();
                 reader.onload = e => {
@@ -21116,7 +23167,7 @@ Binary data (${formatSize(data.length)})
                 reader.readAsArrayBuffer(file);
             });
 
-            // GODMODE decode drop zone
+            // SPECTER decode drop zone
             setupDropZone('godmode-decode-drop', 'godmode-decode-input', file => {
                 const img = new Image();
                 img.onload = () => {
@@ -21198,50 +23249,60 @@ Binary data (${formatSize(data.length)})
                 }
             });
 
-            // AI Agent drop zone
-            setupDropZone('aiagent-image-drop', 'aiagent-image-input', file => {
-                // Store raw file bytes for metadata/structure analysis
+            // AI Agent — REVEAL upload zone
+            setupDropZone('aiagent-reveal-drop', 'aiagent-reveal-input', file => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     state.aiAgentFileBytes = new Uint8Array(e.target.result);
-                    // Detect format from magic bytes first, fall back to extension
                     const bytes = state.aiAgentFileBytes;
                     let detectedType = file.name.split('.').pop()?.toUpperCase() || 'UNKNOWN';
-                    if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) detectedType = 'PNG';
-                    else if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) detectedType = 'JPEG';
-                    else if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) detectedType = 'GIF';
-                    else if (bytes[0] === 0x42 && bytes[1] === 0x4D) detectedType = 'BMP';
-                    else if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
-                             bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) detectedType = 'WEBP';
-                    else if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) detectedType = 'PDF';
-                    else if (bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04) detectedType = 'ZIP';
+                    if (bytes[0]===0x89 && bytes[1]===0x50) detectedType = 'PNG';
+                    else if (bytes[0]===0xFF && bytes[1]===0xD8) detectedType = 'JPEG';
+                    else if (bytes[0]===0x47 && bytes[1]===0x49 && bytes[2]===0x46) detectedType = 'GIF';
+                    else if (bytes[0]===0x42 && bytes[1]===0x4D) detectedType = 'BMP';
+                    else if (bytes[0]===0x25 && bytes[1]===0x50 && bytes[2]===0x44) detectedType = 'PDF';
+                    else if (bytes[0]===0x50 && bytes[1]===0x4B) detectedType = 'ZIP';
                     state.aiAgentFileType = detectedType;
-                    state.detectedFormat = detectedType;
-                    // Also store JPEG raw bytes for F5/DCT tools
-                    if (detectedType === 'JPEG') {
-                        state.aiAgentJpegData = bytes;
-                        state.decodeJpegData = bytes;
-                    }
+                    if (detectedType === 'JPEG') { state.aiAgentJpegData = bytes; }
                 };
                 reader.readAsArrayBuffer(file);
 
                 const img = new Image();
-                img.onload = () => {
+                img.onload = async () => {
+                    if (state.aiAgentFileBytes && state.aiAgentFileBytes[0]===0x89 && state.aiAgentFileBytes[1]===0x50) {
+                        const rawCanvas = await pngBytesToCanvas(state.aiAgentFileBytes);
+                        state.aiAgentCanvas = rawCanvas || imageToCanvas(img);
+                    } else {
+                        state.aiAgentCanvas = imageToCanvas(img);
+                    }
+                    state.aiAgentRevealCanvas = state.aiAgentCanvas;
                     state.aiAgentImage = img;
-                    state.aiAgentCanvas = imageToCanvas(img);
-                    state.fileName = file.name;
+                    document.getElementById('aiagent-reveal-preview').src = img.src;
+                    document.getElementById('aiagent-reveal-preview').classList.remove('hidden');
                     const ext = state.aiAgentFileType || file.name.split('.').pop()?.toUpperCase() || 'UNKNOWN';
-                    document.getElementById('aiagent-image-preview').src = img.src;
-                    document.getElementById('aiagent-image-preview').classList.remove('hidden');
-                    document.getElementById('aiagent-image-info').textContent = `${img.naturalWidth} x ${img.naturalHeight} (${ext})`;
-                    // Show checklist info button
+                    document.getElementById('aiagent-reveal-info').textContent = `${img.naturalWidth} x ${img.naturalHeight} (${ext})`;
                     const infoBtn = document.getElementById('checklist-info-btn');
                     if (infoBtn) {
                         infoBtn.style.display = 'block';
                         const checklist = getChecklistForFileType(ext);
                         document.getElementById('checklist-info-text').textContent = `View ${checklist.techniques.length} techniques for ${ext}`;
                     }
-                    notify('Image loaded for AI analysis', 'success');
+                    notify('File loaded for Reveal', 'success');
+                };
+                img.src = URL.createObjectURL(file);
+            });
+
+            // AI Agent — CONCEAL upload zone
+            setupDropZone('aiagent-conceal-drop', 'aiagent-conceal-input', file => {
+                const img = new Image();
+                img.onload = () => {
+                    state.aiAgentCanvas = imageToCanvas(img);
+                    state.aiAgentConcealCanvas = state.aiAgentCanvas;
+                    state.aiAgentImage = img;
+                    document.getElementById('aiagent-conceal-preview').src = img.src;
+                    document.getElementById('aiagent-conceal-preview').classList.remove('hidden');
+                    document.getElementById('aiagent-conceal-info').textContent = `${img.naturalWidth} x ${img.naturalHeight} (Carrier)`;
+                    notify('Carrier image loaded for Conceal', 'success');
                 };
                 img.src = URL.createObjectURL(file);
             });
